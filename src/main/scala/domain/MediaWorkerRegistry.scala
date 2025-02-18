@@ -7,7 +7,10 @@ import cats.{Applicative, Monad}
 
 import scala.collection.mutable
 
-
+/**
+ * A registry that collects all workers in the hospital
+ * @tparam F
+ */
 trait MediaWorkerRegistry[F[_]] {
   def startNewWorker(): F[MediaWorkerId]
 

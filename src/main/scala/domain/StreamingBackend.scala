@@ -2,12 +2,16 @@ package domain
 
 import cats.effect.Sync
 import cats.effect.kernel.{Async, Resource}
-import cats.implicits.*
 import cats.syntax.all.*
 import cats.{Applicative, Monad}
 
 import scala.concurrent.duration.*
 
+/**
+ * StreamingProcess is an entity that represents spawned streaming media process
+ *
+ * @tparam F
+ */
 trait StreamingProcess[F[_]] {
   def stop: F[Unit]
 }
@@ -15,6 +19,7 @@ trait StreamingProcess[F[_]] {
 trait StreamingBackend[F[_]] {
   /**
    * Runs new streaming process in separate thread
+   *
    * @param mediaSource
    * @param mediaSink
    * @return
@@ -31,7 +36,7 @@ class StreamingBackendImpl[F[_] : Async : Monad] extends StreamingBackend[F] {
       _ <- Async[F].sleep(5.second)
       _ <- if ifStopped then Applicative[F].unit else loop
     } yield ()
-    
+
     Resource
       .make(
         Async[F].start(loop).map { hello =>

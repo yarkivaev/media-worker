@@ -12,7 +12,10 @@ lazy val root = (project in file("."))
       "org.http4s" %% "http4s-ember-client" % "0.23.30",
       "org.typelevel" %% "cats-effect" % "3.5.7",
       "com.github.nscala-time" %% "nscala-time" % "3.0.0",
-      "com.lihaoyi" %% "os-lib" % "0.9.0",
+      "com.lihaoyi" %% "os-lib" % "0.11.4",
+
+      "org.scalatest" %% "scalatest" % "3.2.19" % Test,
+      "org.typelevel" %% "cats-effect" % "3.5.7" % Test,
     ),
     scalacOptions += "-Ykind-projector"
   )

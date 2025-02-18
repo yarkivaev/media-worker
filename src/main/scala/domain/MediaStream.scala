@@ -5,15 +5,16 @@ import com.github.nscala_time.time.Imports.*
 
 type MediaStreamId = Int
 
-enum MediaStreamStatus:
-  case Active, Stopped, Finished
-
+/**
+ * A MediaStream is an entity that represents a data stream flowing from a sink to a source, which is intended to 
+ * eventually be integrated and maintained within the hospital system.
+ * @tparam F
+ */
 trait MediaStream[F[_]] {
   val id: MediaStreamId
   val startDateTime: DateTime
   val stopDateTime: DateTime
   val goal: MediaStreamType
-  val status: MediaStreamStatus
   val source: MediaSource
   val sink: MediaSink
 
@@ -49,7 +50,6 @@ case class MediaStreamImpl[F[_] : StreamingBackend](
                                                      startDateTime: DateTime,
                                                      stopDateTime: DateTime,
                                                      goal: MediaStreamType,
-                                                     status: MediaStreamStatus,
                                                      source: MediaSource,
                                                      sink: MediaSink,
                                                    ) extends MediaStream[F] {
