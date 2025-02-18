@@ -16,6 +16,7 @@ lazy val root = (project in file("."))
 
       "org.scalatest" %% "scalatest" % "3.2.19" % Test,
       "org.typelevel" %% "cats-effect" % "3.5.7" % Test,
+      "org.scalatestplus" %% "mockito-5-10" % "3.2.18.0" % Test,
     ),
     scalacOptions += "-Ykind-projector"
   )

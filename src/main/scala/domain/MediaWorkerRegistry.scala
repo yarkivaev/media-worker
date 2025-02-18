@@ -17,7 +17,7 @@ trait MediaWorkerRegistry[F[_]] {
   def stopMediaWorker(id: MediaWorkerId): F[Either[Throwable, Unit]]
 }
 
-case class MediaWorkerRegistryImpl[F[_] : Monad : Random : Async]
+class MediaWorkerRegistryImpl[F[_] : Monad : Random : Async]
 (
   storage: mutable.Map[MediaWorkerId, MediaWorker[F]],
   mediaWorkerSup: (id: MediaWorkerId,
@@ -45,10 +45,10 @@ case class MediaWorkerRegistryImpl[F[_] : Monad : Random : Async]
 
   override def stopMediaWorker(id: MediaWorkerId): F[Either[Throwable, Unit]] =
     for {
-      optionalMediaWorkerFiber <- Applicative[F].pure {
+      optionalMediaWorker <- Applicative[F].pure {
         storage.get(id)
       }
-      res <- optionalMediaWorkerFiber match {
+      res <- optionalMediaWorker match {
         case Some(mediaWorker) => mediaWorker.stop.map(Right(_))
         case None => Applicative[F].pure {
           Left(new Exception("No such media worker"))
