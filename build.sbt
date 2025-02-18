@@ -13,5 +13,6 @@ lazy val root = (project in file("."))
       "org.typelevel" %% "cats-effect" % "3.5.7",
       "com.github.nscala-time" %% "nscala-time" % "3.0.0",
       "com.lihaoyi" %% "os-lib" % "0.9.0",
-    )
+    ),
+    scalacOptions += "-Ykind-projector"
   )

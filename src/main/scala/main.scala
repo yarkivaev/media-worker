@@ -1,15 +1,15 @@
+import cats.effect.kernel.{Async, Resource}
 import cats.{Applicative, Monad}
-import cats.effect.std.Random
+import cats.effect.std.{Queue, Random}
 import cats.effect.{ExitCode, IO, IOApp}
 import com.github.nscala_time.time.Imports.DateTime
 import domain.MediaStreamStatus.Active
-import domain.{HlsSink, MediaSink, MediaSource, MediaStream, MediaStreamImpl, MediaStreamStatus, MediaStreamType, MediaWorkerImpl, MediaWorkerRegistryImpl, MediaWorkerStatus, RecordVideoSource, RtmpSink, RtmpSource, RtspSource, StreamingBackendImpl}
+import domain.{HlsSink, MediaSink, MediaSource, MediaStream, MediaStreamImpl, MediaStreamStatus, MediaStreamType, MediaWorker, MediaWorkerId, MediaWorkerImpl, MediaWorkerRegistryImpl, MediaWorkerStatus, RecordVideoSource, RtmpSink, RtmpSource, RtspSource, StreamingBackendImpl}
 import org.http4s.HttpRoutes
 import org.http4s.dsl.io.*
 import org.http4s.implicits.*
 import org.http4s.blaze.server.BlazeServerBuilder
 
-import java.util.concurrent.{ArrayBlockingQueue, BlockingQueue, LinkedBlockingDeque}
 import scala.collection.mutable
 import scala.concurrent.duration.*
 import sys.process.*
@@ -39,15 +39,15 @@ object Main extends IOApp {
     IO(os.proc("ls", "src").spawn()).map(res => print(res.stdout)).as(ExitCode.Success)
 
   def mainThread(args: List[String]): IO[ExitCode] =
-    for {
-      random <- Random.scalaUtilRandom[IO]
-      queue = LinkedBlockingDeque[MediaStream[IO]]()
-      registry = MediaWorkerRegistryImpl[IO](
-        mutable.Map(),
+    (for {
+      random <- Resource.eval(Random.scalaUtilRandom[IO])
+      queue <- Resource.eval(Queue.unbounded[IO, MediaStream[IO]]())
+      registry <- MediaWorkerRegistryImpl[IO](
+        mutable.Map[MediaWorkerId, MediaWorker[IO]](),
         MediaWorkerImpl[IO](_, _, _, _),
         Integer.MAX_VALUE,
         queue
-      )(implicitly[Monad[IO]], random)
+      )(implicitly[Monad[IO]], random, implicitly[Async[IO]])
       streamingBackend = StreamingBackendImpl[IO]
       mediaStream1 = MediaStreamImpl[IO](
         42,
@@ -67,11 +67,33 @@ object Main extends IOApp {
         RtspSource("helo"),
         RtmpSink("helo"),
       )(streamingBackend)
-      _ <- registry.startNewWorker()
-      _ <- Applicative[IO].pure { queue.put(mediaStream1) }
-      _ <- Applicative[IO].pure { queue.put(mediaStream2) }
-      a <- IO.never.as(ExitCode.Success)
-    } yield a //ExitCode.Success
+      id <- Resource.eval(registry.startNewWorker())
+//      id2 <- Resource.eval(registry.startNewWorker())
+      _ <- Resource.eval { queue.offer(mediaStream1) }
+      _ <- Resource.eval{ Async[IO].start {
+        def loop: IO[Unit] = {
+          for {
+            _ <- queue.offer(mediaStream1)
+            _ <- Async[IO].sleep(2.second)
+            _ <- loop
+          } yield ()
+        }
+        loop
+      } }
+      _ <- Resource.eval{ Async[IO].start {
+        def loop: IO[Unit] = {
+          for {
+            _ <- queue.offer(mediaStream2)
+            _ <- Async[IO].sleep(1.5.second)
+            _ <- loop
+          } yield ()
+        }
+        loop
+      } }
+      _ <- Resource.eval(Async[IO].sleep(5.second))
+      _ <- Resource.eval(registry.stopMediaWorker(id))
+      a <- Resource.eval(IO.never.as(ExitCode.Success))
+    } yield a).use_.as(ExitCode.Success) //ExitCode.Success
 //    BlazeServerBuilder[IO]
 //      .bindHttp(8080, "0.0.0.0")
 //      .withHttpApp(helloWorldService)

@@ -1,5 +1,6 @@
 package domain;
 
+import cats.effect.kernel.Resource
 import com.github.nscala_time.time.Imports.*
 
 type MediaStreamId = Int
@@ -16,7 +17,7 @@ trait MediaStream[F[_]] {
   val source: MediaSource
   val sink: MediaSink
 
-  def act: F[Unit]
+  def act: Resource[F, StreamingProcess[F]]
 }
 
 trait MediaStreamType {}
@@ -53,5 +54,5 @@ case class MediaStreamImpl[F[_] : StreamingBackend](
                                                      sink: MediaSink,
                                                    ) extends MediaStream[F] {
 
-  override def act: F[Unit] = implicitly[StreamingBackend[F]].run(source, sink)
+  override def act: Resource[F, StreamingProcess[F]] = implicitly[StreamingBackend[F]].spawnNewProcess(source, sink)
 }
