@@ -13,11 +13,9 @@ import scala.concurrent.duration.*
 
 class MediaWorkerSpec extends flatspec.AnyFlatSpec with matchers.should.Matchers {
 
-  // Fake MediaStream and StreamingProcess for testing purposes
   case class FakeMediaStream[F[_] : Async](id: MediaStreamId) extends MediaStream[F]:
     override val startDateTime: Imports.DateTime = Imports.DateTime.now()
     override val stopDateTime: Imports.DateTime = Imports.DateTime.now()
-    override val goal: MediaStreamType = RecordVideoSource()
     var stopped = false
     override val source: MediaSource = RtmpSource("123")
     override val sink: MediaSink = RtmpSink("132")
@@ -64,7 +62,7 @@ class MediaWorkerSpec extends flatspec.AnyFlatSpec with matchers.should.Matchers
       }
     }.unsafeRunSync()
     assert(activeStreams.isEmpty)
-    assert(fakeStream.stopped == true)
+    assert(fakeStream.stopped)
     assert(queue.size.unsafeRunSync() == 1)
   }
 }

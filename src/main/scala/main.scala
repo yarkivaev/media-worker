@@ -3,7 +3,7 @@ import cats.{Applicative, Monad}
 import cats.effect.std.{Queue, Random}
 import cats.effect.{ExitCode, IO, IOApp}
 import com.github.nscala_time.time.Imports.DateTime
-import domain.{HlsSink, MediaSink, MediaSource, MediaStream, MediaStreamImpl, MediaStreamType, MediaWorker, MediaWorkerId, MediaWorkerImpl, MediaWorkerRegistryImpl, MediaWorkerStatus, RecordVideoSource, RtmpSink, RtmpSource, RtspSource, StreamingBackendImpl}
+import domain.{HlsSink, MediaSink, MediaSource, MediaStream, MediaStreamImpl, MediaWorker, MediaWorkerId, MediaWorkerImpl, MediaWorkerRegistryImpl, MediaWorkerStatus, RecordVideoSource, RtmpSink, RtmpSource, RtspSource, StreamingBackendImpl}
 import org.http4s.HttpRoutes
 import org.http4s.dsl.io.*
 import org.http4s.implicits.*
@@ -52,7 +52,6 @@ object Main extends IOApp {
         42,
         DateTime.now(),
         DateTime.now(),
-        RecordVideoSource(),
         RtmpSource("helo"),
         HlsSink("helo"),
       )(streamingBackend)
@@ -60,7 +59,6 @@ object Main extends IOApp {
         42,
         DateTime.now(),
         DateTime.now(),
-        RecordVideoSource(),
         RtspSource("helo"),
         RtmpSink("helo"),
       )(streamingBackend)

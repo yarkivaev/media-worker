@@ -2,6 +2,10 @@ package domain;
 
 import cats.effect.kernel.Resource
 import com.github.nscala_time.time.Imports.*
+import io.circe.Decoder
+import io.circe.generic.semiauto._
+import io.circe.syntax._
+import cats.syntax.functor._
 
 type MediaStreamId = Int
 
@@ -14,42 +18,68 @@ trait MediaStream[F[_]] {
   val id: MediaStreamId
   val startDateTime: DateTime
   val stopDateTime: DateTime
-  val goal: MediaStreamType
   val source: MediaSource
   val sink: MediaSink
 
   def act: Resource[F, StreamingProcess[F]]
 }
 
-trait MediaStreamType {}
+sealed trait MediaSource
 
-case class RecordVideoSource() extends MediaStreamType {}
-
-case class CameraToMiddleware() extends MediaStreamType {}
-
-case class SupplyWebRtcServer() extends MediaStreamType {}
-
-trait MediaSource {
-  val url: String
+object MediaSource {
+  implicit val decoder: Decoder[MediaSource] =
+    List[Decoder[MediaSource]](
+      Decoder[RtmpSource].widen,
+      Decoder[RtspSource].widen
+    ).reduceLeft(_ or _)
 }
 
-case class RtmpSource(url: String) extends MediaSource {}
+case class RtmpSource private (url: String) extends MediaSource
 
-case class RtspSource(url: String) extends MediaSource {}
+object RtmpSource {
+  implicit val decoder: Decoder[RtmpSource] = deriveDecoder[RtmpSource]
 
-trait MediaSink {
-  val url: String
+  def apply(url: String): RtmpSource = new RtmpSource(url)
 }
 
-case class RtmpSink(url: String) extends MediaSink {}
+case class RtspSource private (url: String)  extends MediaSource
 
-case class HlsSink(url: String) extends MediaSink {}
+object RtspSource {
+  implicit val decoder: Decoder[RtspSource] = deriveDecoder[RtspSource]
+
+  def apply(url: String): RtspSource = new RtspSource(url)
+}
+
+trait MediaSink
+
+object MediaSink {
+  implicit val decoder: Decoder[MediaSink] =
+    List[Decoder[MediaSink]](
+      Decoder[RtmpSink].widen,
+      Decoder[HlsSink].widen
+    ).reduceLeft(_ or _)
+}
+
+case class RtmpSink private (url: String) extends MediaSink {}
+
+object RtmpSink {
+  implicit val decoder: Decoder[RtmpSink] = deriveDecoder[RtmpSink]
+
+  def apply(url: String): RtmpSink = new RtmpSink(url)
+}
+
+case class HlsSink private (path: String) extends MediaSink {}
+
+object HlsSink {
+  implicit val decoder: Decoder[HlsSink] = deriveDecoder[HlsSink]
+
+  def apply(path: String): HlsSink = new HlsSink(path)
+}
 
 case class MediaStreamImpl[F[_] : StreamingBackend](
                                                      id: MediaStreamId,
                                                      startDateTime: DateTime,
                                                      stopDateTime: DateTime,
-                                                     goal: MediaStreamType,
                                                      source: MediaSource,
                                                      sink: MediaSink,
                                                    ) extends MediaStream[F] {
