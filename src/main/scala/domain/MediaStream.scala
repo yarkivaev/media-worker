@@ -2,10 +2,10 @@ package domain;
 
 import cats.effect.kernel.Resource
 import com.github.nscala_time.time.Imports.*
-import io.circe.Decoder
-import io.circe.generic.semiauto._
-import io.circe.syntax._
-import cats.syntax.functor._
+import io.circe.{Codec, Decoder, Encoder}
+import io.circe.generic.semiauto.*
+import io.circe.syntax.*
+import cats.syntax.functor.*
 
 type MediaStreamId = Int
 
@@ -21,7 +21,7 @@ trait MediaStream[F[_]] {
   val source: MediaSource
   val sink: MediaSink
 
-  def act: Resource[F, StreamingProcess[F]]
+  def act: F[Unit]
 }
 
 sealed trait MediaSource
@@ -32,12 +32,18 @@ object MediaSource {
       Decoder[RtmpSource].widen,
       Decoder[RtspSource].widen
     ).reduceLeft(_ or _)
+
+  implicit val encoder: Encoder[MediaSource] =
+    Encoder.instance {
+      case rtmp: RtmpSource => rtmp.asJson
+      case rtsp: RtspSource => rtsp.asJson
+    }
 }
 
 case class RtmpSource private (url: String) extends MediaSource
 
 object RtmpSource {
-  implicit val decoder: Decoder[RtmpSource] = deriveDecoder[RtmpSource]
+  implicit val decoder: Codec[RtmpSource] = deriveCodec[RtmpSource]
 
   def apply(url: String): RtmpSource = new RtmpSource(url)
 }
@@ -45,7 +51,7 @@ object RtmpSource {
 case class RtspSource private (url: String)  extends MediaSource
 
 object RtspSource {
-  implicit val decoder: Decoder[RtspSource] = deriveDecoder[RtspSource]
+  implicit val decoder: Codec[RtspSource] = deriveCodec[RtspSource]
 
   def apply(url: String): RtspSource = new RtspSource(url)
 }
@@ -58,12 +64,18 @@ object MediaSink {
       Decoder[RtmpSink].widen,
       Decoder[HlsSink].widen
     ).reduceLeft(_ or _)
+
+  implicit val encoder: Encoder[MediaSink] =
+    Encoder.instance {
+      case rtmp: RtmpSink => rtmp.asJson
+      case hls: HlsSink => hls.asJson
+    }
 }
 
 case class RtmpSink private (url: String) extends MediaSink {}
 
 object RtmpSink {
-  implicit val decoder: Decoder[RtmpSink] = deriveDecoder[RtmpSink]
+  implicit val decoder: Codec[RtmpSink] = deriveCodec[RtmpSink]
 
   def apply(url: String): RtmpSink = new RtmpSink(url)
 }
@@ -71,7 +83,7 @@ object RtmpSink {
 case class HlsSink private (path: String) extends MediaSink {}
 
 object HlsSink {
-  implicit val decoder: Decoder[HlsSink] = deriveDecoder[HlsSink]
+  implicit val decoder: Codec[HlsSink] = deriveCodec[HlsSink]
 
   def apply(path: String): HlsSink = new HlsSink(path)
 }
@@ -84,5 +96,5 @@ case class MediaStreamImpl[F[_] : StreamingBackend](
                                                      sink: MediaSink,
                                                    ) extends MediaStream[F] {
 
-  override def act: Resource[F, StreamingProcess[F]] = implicitly[StreamingBackend[F]].spawnNewProcess(source, sink)
+  override def act: F[Unit] = implicitly[StreamingBackend[F]].stream(source, sink)
 }
