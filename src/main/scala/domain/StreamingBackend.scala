@@ -1,20 +1,11 @@
 package domain
 
+import cats.Monad
 import cats.effect.Sync
-import cats.effect.kernel.{Async, Resource}
+import cats.effect.kernel.{Async, MonadCancel}
 import cats.syntax.all.*
-import cats.{Applicative, Monad}
 
 import scala.concurrent.duration.*
-
-/**
- * StreamingProcess is an entity that represents spawned streaming media process
- *
- * @tparam F
- */
-trait StreamingProcess[F[_]] {
-  def stop: F[Unit]
-}
 
 trait StreamingBackend[F[_]] {
   /**
@@ -24,30 +15,19 @@ trait StreamingBackend[F[_]] {
    * @param mediaSink
    * @return
    */
-  def spawnNewProcess(mediaSource: MediaSource, mediaSink: MediaSink): Resource[F, StreamingProcess[F]]
+  def stream(mediaSource: MediaSource, mediaSink: MediaSink): F[Unit]
 }
 
-class StreamingBackendImpl[F[_] : Async : Monad] extends StreamingBackend[F] {
-  override def spawnNewProcess(mediaSource: MediaSource, mediaSink: MediaSink): Resource[F, StreamingProcess[F]] = {
-    var ifStopped = false
+class StreamingBackendImpl[F[_] : Async : Monad](implicit val monadCancel: MonadCancel[F, Throwable]) extends StreamingBackend[F] {
+  override def stream(mediaSource: MediaSource, mediaSink: MediaSink): F[Unit] = {
+    def loop: F[Unit] =
+      for {
+        _ <- Sync[F].delay(println(s"Streaming from $mediaSource to $mediaSink"))
+        _ <- Sync[F].sleep(1.second)
+        _ <- loop
+      } yield ()
 
-    def loop: F[Unit] = for {
-      _ <- Sync[F].delay(println(s"Streaming from $mediaSource to $mediaSink"))
-      _ <- Async[F].sleep(5.second)
-      _ <- if ifStopped then Applicative[F].unit else loop
-    } yield ()
-
-    Resource
-      .make(
-        Async[F].start(loop).map { hello =>
-          new StreamingProcess[F] {
-            def stop: F[Unit] = {
-              ifStopped = true
-              Applicative[F].unit
-            }
-          }
-        }
-      )(_.stop)
+    loop
   }
 }
 
