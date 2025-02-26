@@ -16,9 +16,9 @@ class MediaWorkerSpec extends flatspec.AnyFlatSpec with matchers.should.Matchers
 
     val queue = Queue.unbounded[IO, MediaStream[IO]]().unsafeRunSync()
 
-    def brokerMessage(command: MediaWorkerCommand): BrokerMessage[IO, MediaWorkerCommand] =
-      new BrokerMessage[IO, MediaWorkerCommand] {
-        val message: MediaWorkerCommand = command
+    def brokerMessage(command: MediaWorkerCommand[IO]): BrokerMessage[IO, MediaWorkerCommand[IO]] =
+      new BrokerMessage[IO, MediaWorkerCommand[IO]] {
+        val message: MediaWorkerCommand[IO] = command
 
         def ack: IO[Unit] = IO.unit
       }

@@ -19,8 +19,8 @@ object FFMpeg {
     }
 
 
-  given mediaSinkStreamingResource[F[_], K[_]](
-                                          using temporalStorage: TemporalObject[F, K, MediaSink]
+  given mediaSinkStreamingResource[F[_]](
+                                          using temporalStorage: TemporalObject[F, MediaSink]
                                         ): StreamingResource[FFMpeg, MediaSink] =
     new StreamingResource[FFMpeg, MediaSink] {
 

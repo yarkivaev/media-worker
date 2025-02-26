@@ -3,6 +3,8 @@ package domain
 import cats.effect.*
 import cats.effect.unsafe.implicits.global
 import com.comcast.ip4s.Port
+import domain.streaming.StreamingBackendImpl
+import domain.temporal.TemporalObjectImpl
 import fs2.Stream
 import io.circe.*
 import io.circe.generic.auto.*
@@ -13,6 +15,7 @@ import lepus.std.ChannelCodec
 import org.scalatest.*
 import org.scalatestplus.mockito.MockitoSugar
 import org.testcontainers.containers.RabbitMQContainer
+import domain.MediaWorkerCommand._
 
 class BrokerSpec extends flatspec.AnyFlatSpec with MockitoSugar with BeforeAndAfterAll {
 
@@ -63,6 +66,10 @@ class BrokerSpec extends flatspec.AnyFlatSpec with MockitoSugar with BeforeAndAf
   }
 
   it should "be able to transfer MediaWorkerCommand" in {
+    
+    implicit val streamingBackend: StreamingBackendImpl[IO] = StreamingBackendImpl[IO]()
+    implicit val temporalSource: TemporalObjectImpl[MediaSource] = TemporalObjectImpl[MediaSource]
+    implicit val temporalSink: TemporalObjectImpl[MediaSink] = TemporalObjectImpl[MediaSink]
 
     val stream = Stream(
       RouteCameraToMiddleware(
@@ -70,7 +77,8 @@ class BrokerSpec extends flatspec.AnyFlatSpec with MockitoSugar with BeforeAndAf
         RtmpSink("url")
       ),
       RecordVideoSource(
-        RtmpSource("url")
+        RtmpSource("url"),
+        HlsSink()
       ),
       SupplyWebRtcServer(
         RtmpSource("url"),
