@@ -3,6 +3,7 @@ package domain
 import cats.effect.*
 import cats.effect.std.Queue
 import cats.effect.unsafe.implicits.global
+import domain.streaming.StreamingBackendImpl
 import fs2.*
 import org.scalatest.*
 

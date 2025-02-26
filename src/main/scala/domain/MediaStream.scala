@@ -6,6 +6,7 @@ import io.circe.{Codec, Decoder, Encoder}
 import io.circe.generic.semiauto.*
 import io.circe.syntax.*
 import cats.syntax.functor.*
+import domain.streaming.StreamingBackend
 
 type MediaStreamId = Int
 
@@ -40,23 +41,19 @@ object MediaSource {
     }
 }
 
-case class RtmpSource private (url: String) extends MediaSource
+case class RtmpSource(url: String) extends MediaSource
 
 object RtmpSource {
   implicit val decoder: Codec[RtmpSource] = deriveCodec[RtmpSource]
-
-  def apply(url: String): RtmpSource = new RtmpSource(url)
 }
 
-case class RtspSource private (url: String)  extends MediaSource
+case class RtspSource(url: String)  extends MediaSource
 
 object RtspSource {
   implicit val decoder: Codec[RtspSource] = deriveCodec[RtspSource]
-
-  def apply(url: String): RtspSource = new RtspSource(url)
 }
 
-trait MediaSink
+sealed trait MediaSink
 
 object MediaSink {
   implicit val decoder: Decoder[MediaSink] =
@@ -72,20 +69,16 @@ object MediaSink {
     }
 }
 
-case class RtmpSink private (url: String) extends MediaSink {}
+case class RtmpSink(url: String) extends MediaSink {}
 
 object RtmpSink {
   implicit val decoder: Codec[RtmpSink] = deriveCodec[RtmpSink]
-
-  def apply(url: String): RtmpSink = new RtmpSink(url)
 }
 
-case class HlsSink private (path: String) extends MediaSink {}
+case class HlsSink() extends MediaSink {}
 
 object HlsSink {
   implicit val decoder: Codec[HlsSink] = deriveCodec[HlsSink]
-
-  def apply(path: String): HlsSink = new HlsSink(path)
 }
 
 case class MediaStreamImpl[F[_] : StreamingBackend](
