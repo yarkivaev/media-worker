@@ -1,13 +1,13 @@
 package domain.streaming
 
-import domain.temporal.TemporalObject
 import domain.*
+import domain.temporal.TemporalObject
 
 type FFMpeg[A]
 
 object FFMpeg {
-  given mediaSourceStreamingResource: StreamingResource[FFMpeg, MediaSource] =
-    new StreamingResource[FFMpeg, MediaSource] {
+  given StreamingResource[MediaSource] =
+    new StreamingResource[MediaSource] {
 
       override def destination(media: MediaSource): String = media match
         case RtmpSource(url) => url
@@ -19,10 +19,10 @@ object FFMpeg {
     }
 
 
-  given mediaSinkStreamingResource[F[_]](
-                                          using temporalStorage: TemporalObject[F, MediaSink]
-                                        ): StreamingResource[FFMpeg, MediaSink] =
-    new StreamingResource[FFMpeg, MediaSink] {
+  given [F[_]](
+                using temporalStorage: TemporalObject[F, MediaSink]
+              ): StreamingResource[MediaSink] =
+    new StreamingResource[MediaSink] {
 
       override def destination(media: MediaSink): String = media match
         case RtmpSink(url) => url

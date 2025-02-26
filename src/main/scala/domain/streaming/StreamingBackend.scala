@@ -8,7 +8,7 @@ import domain.{MediaSink, MediaSource}
 
 import scala.concurrent.duration.*
 
-trait StreamingResource[G[_], A] {
+trait StreamingResource[A] {
   def destination(media: A): String
   def options(media: A): Map[String, String]
 }

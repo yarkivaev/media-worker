@@ -5,10 +5,10 @@ import domain.{MediaSink, MediaSource}
 
 import scala.sys.process.*
 
-class FFMpegStreamingBackend[F[_] : Sync, G[_], K[_]]
+class FFMpegStreamingBackend[F[_] : Sync]
 (
-  using sourceStreamingResource: StreamingResource[G, MediaSource],
-  sinkStreamingResource: StreamingResource[G, MediaSink]
+  using sourceStreamingResource: StreamingResource[MediaSource],
+  sinkStreamingResource: StreamingResource[MediaSink]
 ) extends StreamingBackend[F] {
   override def stream(mediaSource: MediaSource, mediaSink: MediaSink): F[Unit] = {
     val command =
