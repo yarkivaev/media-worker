@@ -28,13 +28,13 @@ trait MediaStream[F[_]] {
 sealed trait MediaSource
 
 object MediaSource {
-  implicit val decoder: Decoder[MediaSource] =
+  given Decoder[MediaSource] =
     List[Decoder[MediaSource]](
       Decoder[RtmpSource].widen,
       Decoder[RtspSource].widen
     ).reduceLeft(_ or _)
 
-  implicit val encoder: Encoder[MediaSource] =
+  given Encoder[MediaSource] =
     Encoder.instance {
       case rtmp: RtmpSource => rtmp.asJson
       case rtsp: RtspSource => rtsp.asJson
@@ -44,25 +44,25 @@ object MediaSource {
 case class RtmpSource(url: String) extends MediaSource
 
 object RtmpSource {
-  implicit val decoder: Codec[RtmpSource] = deriveCodec[RtmpSource]
+  given Codec[RtmpSource] = deriveCodec[RtmpSource]
 }
 
 case class RtspSource(url: String)  extends MediaSource
 
 object RtspSource {
-  implicit val decoder: Codec[RtspSource] = deriveCodec[RtspSource]
+  given Codec[RtspSource] = deriveCodec[RtspSource]
 }
 
 sealed trait MediaSink
 
 object MediaSink {
-  implicit val decoder: Decoder[MediaSink] =
+  given Decoder[MediaSink] =
     List[Decoder[MediaSink]](
       Decoder[RtmpSink].widen,
       Decoder[HlsSink].widen
     ).reduceLeft(_ or _)
 
-  implicit val encoder: Encoder[MediaSink] =
+  given Encoder[MediaSink] =
     Encoder.instance {
       case rtmp: RtmpSink => rtmp.asJson
       case hls: HlsSink => hls.asJson
@@ -72,13 +72,17 @@ object MediaSink {
 case class RtmpSink(url: String) extends MediaSink {}
 
 object RtmpSink {
-  implicit val decoder: Codec[RtmpSink] = deriveCodec[RtmpSink]
+  given Codec[RtmpSink] = deriveCodec[RtmpSink]
 }
 
-case class HlsSink() extends MediaSink {}
+
+type SinkName = String
+
+case class HlsSink(sinkName: SinkName) extends MediaSink {}
 
 object HlsSink {
-  implicit val decoder: Codec[HlsSink] = deriveCodec[HlsSink]
+  given Codec[HlsSink] = deriveCodec[HlsSink]
+  
 }
 
 case class MediaStreamImpl[F[_] : StreamingBackend](
@@ -89,5 +93,5 @@ case class MediaStreamImpl[F[_] : StreamingBackend](
                                                      sink: MediaSink,
                                                    ) extends MediaStream[F] {
 
-  override def act: F[Unit] = implicitly[StreamingBackend[F]].stream(source, sink)
+  override def act: F[Unit] = summon[StreamingBackend[F]].stream(source, sink)
 }

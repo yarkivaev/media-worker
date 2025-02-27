@@ -1,9 +1,10 @@
 package domain
 
-import cats.effect.kernel.MonadCancel
+import cats.effect.{Concurrent, Spawn}
+import cats.effect.kernel.{Async, MonadCancel}
 import cats.implicits.*
+import domain.persistence.Storage
 import domain.streaming.StreamingBackend
-import domain.temporal.TemporalObject
 import io.circe.*
 import io.circe.generic.auto.*
 import io.circe.parser.*
@@ -16,31 +17,31 @@ sealed trait MediaWorkerCommand[F[_]] {
   def act: F[Unit]
 }
 
-case class RecordVideoSource[F[_]](source: MediaSource, hlsSink: MediaSink)
-                                  (
+case class RecordVideoSource[F[_]: Spawn](source: MediaSource, mediaSink: MediaSink)
+                                         (
                                     using streamingBackend: StreamingBackend[F],
-                                    temporalObject: TemporalObject[F, MediaSink],
+                                    storage: Storage[F, MediaSink],
                                     monadCancel: MonadCancel[F, Throwable]
                                   )
   extends MediaWorkerCommand[F] {
   override def act: F[Unit] =
-    for {
-      _ <- streamingBackend.stream(source, hlsSink)
-      _ <- temporalObject.save
-    } yield ()
+    Spawn[F].both(
+      streamingBackend.stream(source, mediaSink),
+      storage.save(mediaSink)
+    ).map(_ => ())
 }
 
 object RecordVideoSource {
   given [F[_]]: Encoder[RecordVideoSource[F]] = (rv: RecordVideoSource[F]) => Json.obj(
     "source" -> rv.source.asJson,
-    "hlsSink" -> rv.hlsSink.asJson
+    "mediaSink" -> rv.mediaSink.asJson
   )
 
-  given [F[_] : StreamingBackend]
-  (using temporal: TemporalObject[F, MediaSink], monadCancel: MonadCancel[F, Throwable])
+  given [F[_] : StreamingBackend : Spawn]
+  (using temporal: Storage[F, MediaSink], monadCancel: MonadCancel[F, Throwable])
   : Decoder[RecordVideoSource[F]] = (c: HCursor) => for {
     source <- c.downField("source").as[MediaSource]
-    hlsSink <- c.downField("hlsSink").as[MediaSink]
+    hlsSink <- c.downField("mediaSink").as[MediaSink]
   } yield RecordVideoSource(source, hlsSink)
 }
 

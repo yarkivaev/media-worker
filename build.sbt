@@ -15,6 +15,7 @@ lazy val root = (project in file("."))
       "dev.hnaderi" %% "lepus-client" % "0.5.4",
       "dev.hnaderi" %% "lepus-std" % "0.5.4",
       "dev.hnaderi" %% "lepus-circe" % "0.5.4",
+      "software.amazon.awssdk" % "s3" % "2.30.27",
 
       "org.scalatest" %% "scalatest" % "3.2.19" % Test,
       "org.typelevel" %% "cats-effect" % "3.5.7" % Test,

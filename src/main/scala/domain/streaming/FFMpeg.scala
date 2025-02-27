@@ -1,7 +1,10 @@
 package domain.streaming
 
+import cats.effect.kernel.Clock
+import cats.effect.std.{Random, UUIDGen}
 import domain.*
-import domain.temporal.TemporalObject
+import domain.persistence.FolderName
+import os.{Path, RelPath}
 
 type FFMpeg[A]
 
@@ -19,24 +22,22 @@ object FFMpeg {
     }
 
 
-  given [F[_]](
-                using temporalStorage: TemporalObject[F, MediaSink]
-              ): StreamingResource[MediaSink] =
+  given [F[_]: Clock](using folderName: FolderName[HlsSink]): StreamingResource[MediaSink] =
     new StreamingResource[MediaSink] {
 
       override def destination(media: MediaSink): String = media match
         case RtmpSink(url) => url
-        case HlsSink() => temporalStorage.path(media)
+        case HlsSink(sinkName) => s"$folderName/output.m3u8"
 
       override def options(media: MediaSink): Map[String, String] = media match
         case RtmpSink(url) => Map("-c" -> "copy", "-f" -> "flv")
-        case HlsSink() => Map(
+        case HlsSink(sinkName) => Map(
           "-c:v" -> "libx264",
           "-c:a" -> "acc",
           "-f" -> "hls",
           "-hls_time" -> "10",
           "-hls_list_size" -> "0",
-          "-hls_segment_filename" -> "segment_%03d.ts"
+          "-hls_segment_filename" -> s"$folderName/segment_%03d.ts"
         )
     }
 
