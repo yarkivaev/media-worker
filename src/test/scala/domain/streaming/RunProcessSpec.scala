@@ -29,7 +29,7 @@ class RunProcessSpec extends flatspec.AnyFlatSpec with matchers.should.Matchers 
       ).useForever).unsafeRunSync()
 
     (IO.sleep(2.second) *>
-            fiber.cancel).unsafeRunSync()
+      fiber.cancel).unsafeRunSync()
     last_counter = counter
     IO.sleep(3.second).unsafeRunSync()
     assert(last_counter == counter)

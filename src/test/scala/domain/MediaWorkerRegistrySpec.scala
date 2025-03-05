@@ -1,13 +1,14 @@
 package domain
 
+import cats.effect.*
+import cats.effect.std.{Queue, Random}
+import cats.effect.unsafe.implicits.global
+import org.mockito.ArgumentMatchers.*
+import org.mockito.Mockito.*
 import org.scalatest.*
 import org.scalatestplus.mockito.MockitoSugar
-import cats.effect.*
-import org.mockito.Mockito.*
-import cats.effect.unsafe.implicits.global
+
 import scala.collection.mutable
-import org.mockito.ArgumentMatchers.*
-import cats.effect.std.{Queue, Random}
 import scala.concurrent.duration.DurationInt
 
 //class MediaWorkerRegistrySpec extends flatspec.AnyFlatSpec with MockitoSugar {

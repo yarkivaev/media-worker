@@ -2,11 +2,12 @@ package domain
 
 import cats.effect.*
 import cats.effect.unsafe.implicits.global
+import cats.implicits.*
 import com.comcast.ip4s.Port
+import domain.persistence.Storage
 import domain.streaming.StreamingBackendImpl
 import fs2.{Pure, Stream}
 import io.circe.*
-import io.circe.generic.auto.*
 import io.circe.parser.*
 import lepus.client.{LepusClient, MessageEncoder}
 import lepus.protocol.domains.{ExchangeName, QueueName}
@@ -14,9 +15,6 @@ import lepus.std.ChannelCodec
 import org.scalatest.*
 import org.scalatestplus.mockito.MockitoSugar
 import org.testcontainers.containers.RabbitMQContainer
-import domain.MediaWorkerCommand.*
-import cats.implicits.*
-import domain.persistence.Storage
 
 class BrokerSpec extends flatspec.AnyFlatSpec with MockitoSugar with BeforeAndAfterAll {
 
@@ -67,9 +65,11 @@ class BrokerSpec extends flatspec.AnyFlatSpec with MockitoSugar with BeforeAndAf
   }
 
   it should "be able to transfer MediaWorkerCommand" in {
-    
+
     given StreamingBackendImpl[IO] = StreamingBackendImpl[IO]()
+
     given Storage[IO, MediaSink] = Storage.fake
+
     given Spawn[IO] = IO.asyncForIO
 
     val stream: Stream[Pure, MediaWorkerCommand[IO]] = Stream(

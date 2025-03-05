@@ -10,6 +10,7 @@ import scala.concurrent.duration.*
 
 trait StreamingResource[A] {
   def destination(media: A): String
+
   def options(media: A): Map[String, String]
 }
 

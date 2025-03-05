@@ -1,6 +1,7 @@
 import cats.effect.{ExitCode, IO, IOApp}
 
 import scala.language.postfixOps
+
 object Main extends IOApp {
 
   def run(args: List[String]): IO[ExitCode] = ???

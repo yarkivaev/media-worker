@@ -4,9 +4,6 @@ import cats.effect.kernel.*
 import cats.effect.std.{Queue, Random}
 import cats.implicits.*
 import cats.syntax.all.*
-import cats.{Applicative, Monad}
-
-import scala.collection.mutable
 
 type MediaWorkerId = Int
 

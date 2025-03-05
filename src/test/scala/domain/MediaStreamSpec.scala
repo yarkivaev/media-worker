@@ -1,12 +1,12 @@
 package domain
 
-import cats.effect.{Async, IO}
 import cats.effect.unsafe.implicits.global
+import cats.effect.{Async, IO}
 import domain.persistence.{FolderName, Storage}
 import org.scalatest.{flatspec, matchers}
 import os.Path
 
-import scala.concurrent.duration._
+import scala.concurrent.duration.*
 
 class MediaStreamSpec extends flatspec.AnyFlatSpec with matchers.should.Matchers {
 
@@ -14,6 +14,7 @@ class MediaStreamSpec extends flatspec.AnyFlatSpec with matchers.should.Matchers
   "HlsSink" should "should save itself" in {
     var outputs = 0
     var segments = 0
+
     given Storage[IO, Path] = path => IO {
       if path.last.startsWith("output") then
         outputs = outputs + 1
@@ -30,6 +31,7 @@ class MediaStreamSpec extends flatspec.AnyFlatSpec with matchers.should.Matchers
       os.remove(os.pwd / folderName)
     }
     os.makeDir(os.pwd / folderName)
+
     given FolderName[HlsSink] = _ => folderName
 
     Async[IO].start(summon[Storage[IO, HlsSink]].save(HlsSink("sinkName"))).unsafeRunSync()
