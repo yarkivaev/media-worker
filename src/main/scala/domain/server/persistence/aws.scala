@@ -1,4 +1,4 @@
-package domain.persistence
+package domain.server.persistence
 
 import cats.effect.Sync
 import io.minio.{MinioClient, UploadObjectArgs}

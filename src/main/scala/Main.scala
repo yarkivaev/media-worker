@@ -1,7 +1,8 @@
 import cats.effect.{ExitCode, IO, IOApp, Resource}
 import com.comcast.ip4s.Port
 import domain.*
-import domain.streaming.{FFMpegStreamingBackend, RunProcess, StreamingBackend, StreamingResource}
+import domain.server.MediaWorker
+import domain.server.streaming.{FFMpegStreamingBackend, RunProcess, StreamingBackend, StreamingResource}
 import lepus.client.LepusClient
 import lepus.protocol.domains.QueueName
 

@@ -3,8 +3,8 @@ package domain
 import cats.effect.Spawn
 import cats.effect.kernel.MonadCancel
 import cats.implicits.*
-import domain.persistence.Storage
-import domain.streaming.StreamingBackend
+import domain.server.persistence.Storage
+import domain.server.streaming.StreamingBackend
 import io.circe.*
 import io.circe.generic.auto.*
 import io.circe.parser.*

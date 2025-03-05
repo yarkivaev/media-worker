@@ -1,4 +1,4 @@
-package domain.streaming
+package domain.server.streaming
 
 import cats.effect.kernel.{MonadCancel, Resource}
 import cats.effect.{IO, Sync}

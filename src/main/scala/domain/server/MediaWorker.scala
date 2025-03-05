@@ -1,7 +1,8 @@
-package domain
+package domain.server
 
 import cats.effect.Concurrent
-import domain.streaming.StreamingBackend
+import domain.server.streaming.StreamingBackend
+import domain.{BrokerMessage, MediaWorkerCommand}
 import fs2.*
 
 object MediaWorker {

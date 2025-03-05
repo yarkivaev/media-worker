@@ -1,8 +1,9 @@
-package domain.streaming
+package domain.server.streaming
 
 import cats.effect.IO
 import cats.effect.kernel.Async
 import cats.effect.unsafe.implicits.global
+import domain.server.streaming.RunProcess
 import org.scalatest.{flatspec, matchers}
 
 import scala.concurrent.duration.*

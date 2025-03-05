@@ -1,4 +1,4 @@
-package domain.streaming
+package domain.server.streaming
 
 import cats.Functor
 import cats.effect.Sync

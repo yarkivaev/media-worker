@@ -1,8 +1,8 @@
-package domain.streaming
+package domain.server.streaming
 
 import cats.effect.kernel.Clock
 import domain.*
-import domain.persistence.FolderName
+import domain.server.persistence.FolderName
 
 object FFMpeg {
   given StreamingResource[MediaSource] =

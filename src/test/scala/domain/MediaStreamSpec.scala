@@ -2,7 +2,7 @@ package domain
 
 import cats.effect.unsafe.implicits.global
 import cats.effect.{Async, IO}
-import domain.persistence.{FolderName, Storage}
+import domain.server.persistence.{FolderName, Storage}
 import org.scalatest.{flatspec, matchers}
 import os.Path
 

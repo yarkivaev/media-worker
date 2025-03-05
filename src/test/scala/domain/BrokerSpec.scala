@@ -4,8 +4,8 @@ import cats.effect.*
 import cats.effect.unsafe.implicits.global
 import cats.implicits.*
 import com.comcast.ip4s.Port
-import domain.persistence.Storage
-import domain.streaming.StreamingBackendImpl
+import domain.server.persistence.Storage
+import domain.server.streaming.StreamingBackendImpl
 import fs2.{Pure, Stream}
 import io.circe.*
 import io.circe.parser.*

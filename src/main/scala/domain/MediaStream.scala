@@ -4,8 +4,8 @@ import cats.effect.kernel.Async
 import cats.effect.{Spawn, Sync}
 import cats.implicits.*
 import com.github.nscala_time.time.Imports.DateTime
-import domain.persistence.{FolderName, Storage}
-import domain.streaming.StreamingBackend
+import domain.server.persistence.{FolderName, Storage}
+import domain.server.streaming.StreamingBackend
 import io.circe.generic.semiauto.*
 import io.circe.syntax.*
 import io.circe.{Codec, Decoder, Encoder}

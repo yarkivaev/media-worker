@@ -1,7 +1,8 @@
-package domain.persistence
+package domain.server.persistence
 
 import cats.effect.IO
 import cats.effect.unsafe.implicits.global
+import domain.server.persistence.Storage
 import io.minio.{GetObjectArgs, ListObjectsArgs, MakeBucketArgs, MinioClient}
 import org.scalatest.{BeforeAndAfterAll, flatspec, matchers}
 import org.testcontainers.containers.GenericContainer
@@ -32,7 +33,7 @@ class AwsSpec extends flatspec.AnyFlatSpec with matchers.should.Matchers with Be
       .credentials("minioadmin", "minioadmin")
       .build
 
-    import aws.given_Storage_F_Path
+    import domain.server.persistence.aws.given_Storage_F_Path
 
     val bucketName = "hello"
     val content = "HelloWorld"
