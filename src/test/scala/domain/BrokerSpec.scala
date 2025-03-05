@@ -2,10 +2,12 @@ package domain
 
 import cats.effect.*
 import cats.effect.unsafe.implicits.global
+import cats.implicits.*
 import com.comcast.ip4s.Port
-import fs2.Stream
+import domain.persistence.Storage
+import domain.streaming.StreamingBackendImpl
+import fs2.{Pure, Stream}
 import io.circe.*
-import io.circe.generic.auto.*
 import io.circe.parser.*
 import lepus.client.{LepusClient, MessageEncoder}
 import lepus.protocol.domains.{ExchangeName, QueueName}
@@ -64,13 +66,20 @@ class BrokerSpec extends flatspec.AnyFlatSpec with MockitoSugar with BeforeAndAf
 
   it should "be able to transfer MediaWorkerCommand" in {
 
-    val stream = Stream(
+    given StreamingBackendImpl[IO] = StreamingBackendImpl[IO]()
+
+    given Storage[IO, MediaSink] = Storage.fake
+
+    given Spawn[IO] = IO.asyncForIO
+
+    val stream: Stream[Pure, MediaWorkerCommand[IO]] = Stream(
       RouteCameraToMiddleware(
         RtmpSource("url"),
         RtmpSink("url")
       ),
       RecordVideoSource(
-        RtmpSource("url")
+        RtmpSource("url"),
+        HlsSink("140")
       ),
       SupplyWebRtcServer(
         RtmpSource("url"),

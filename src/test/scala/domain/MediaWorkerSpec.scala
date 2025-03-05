@@ -3,6 +3,7 @@ package domain
 import cats.effect.*
 import cats.effect.std.Queue
 import cats.effect.unsafe.implicits.global
+import domain.streaming.StreamingBackendImpl
 import fs2.*
 import org.scalatest.*
 
@@ -15,9 +16,9 @@ class MediaWorkerSpec extends flatspec.AnyFlatSpec with matchers.should.Matchers
 
     val queue = Queue.unbounded[IO, MediaStream[IO]]().unsafeRunSync()
 
-    def brokerMessage(command: MediaWorkerCommand): BrokerMessage[IO, MediaWorkerCommand] =
-      new BrokerMessage[IO, MediaWorkerCommand] {
-        val message: MediaWorkerCommand = command
+    def brokerMessage(command: MediaWorkerCommand[IO]): BrokerMessage[IO, MediaWorkerCommand[IO]] =
+      new BrokerMessage[IO, MediaWorkerCommand[IO]] {
+        val message: MediaWorkerCommand[IO] = command
 
         def ack: IO[Unit] = IO.unit
       }

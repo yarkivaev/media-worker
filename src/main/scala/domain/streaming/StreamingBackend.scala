@@ -1,11 +1,18 @@
-package domain
+package domain.streaming
 
 import cats.Monad
 import cats.effect.Sync
 import cats.effect.kernel.{Async, MonadCancel}
 import cats.syntax.all.*
+import domain.{MediaSink, MediaSource}
 
 import scala.concurrent.duration.*
+
+trait StreamingResource[A] {
+  def destination(media: A): String
+
+  def options(media: A): Map[String, String]
+}
 
 trait StreamingBackend[F[_]] {
   /**
@@ -29,8 +36,4 @@ class StreamingBackendImpl[F[_] : Async : Monad](implicit val monadCancel: Monad
 
     loop
   }
-}
-
-abstract class FFMpegStreamingBackend[F[_]] extends StreamingBackend[F] {
-
 }

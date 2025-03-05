@@ -1,17 +1,24 @@
 package domain;
 
-import cats.effect.kernel.Resource
-import com.github.nscala_time.time.Imports.*
-import io.circe.{Codec, Decoder, Encoder}
+import cats.effect.kernel.Async
+import cats.effect.{Spawn, Sync}
+import cats.implicits.*
+import com.github.nscala_time.time.Imports.DateTime
+import domain.persistence.{FolderName, Storage}
+import domain.streaming.StreamingBackend
 import io.circe.generic.semiauto.*
 import io.circe.syntax.*
-import cats.syntax.functor.*
+import io.circe.{Codec, Decoder, Encoder}
+import os.*
+
+import scala.concurrent.duration.*
 
 type MediaStreamId = Int
 
 /**
  * A MediaStream is an entity that represents a data stream flowing from a sink to a source, which is intended to 
  * eventually be integrated and maintained within the hospital system.
+ *
  * @tparam F
  */
 trait MediaStream[F[_]] {
@@ -27,65 +34,97 @@ trait MediaStream[F[_]] {
 sealed trait MediaSource
 
 object MediaSource {
-  implicit val decoder: Decoder[MediaSource] =
+  given Decoder[MediaSource] =
     List[Decoder[MediaSource]](
       Decoder[RtmpSource].widen,
       Decoder[RtspSource].widen
     ).reduceLeft(_ or _)
 
-  implicit val encoder: Encoder[MediaSource] =
+  given Encoder[MediaSource] =
     Encoder.instance {
       case rtmp: RtmpSource => rtmp.asJson
       case rtsp: RtspSource => rtsp.asJson
     }
 }
 
-case class RtmpSource private (url: String) extends MediaSource
+case class RtmpSource(url: String) extends MediaSource
 
 object RtmpSource {
-  implicit val decoder: Codec[RtmpSource] = deriveCodec[RtmpSource]
-
-  def apply(url: String): RtmpSource = new RtmpSource(url)
+  given Codec[RtmpSource] = deriveCodec[RtmpSource]
 }
 
-case class RtspSource private (url: String)  extends MediaSource
+case class RtspSource(url: String) extends MediaSource
 
 object RtspSource {
-  implicit val decoder: Codec[RtspSource] = deriveCodec[RtspSource]
-
-  def apply(url: String): RtspSource = new RtspSource(url)
+  given Codec[RtspSource] = deriveCodec[RtspSource]
 }
 
-trait MediaSink
+sealed trait MediaSink
 
 object MediaSink {
-  implicit val decoder: Decoder[MediaSink] =
+  given Decoder[MediaSink] =
     List[Decoder[MediaSink]](
       Decoder[RtmpSink].widen,
       Decoder[HlsSink].widen
     ).reduceLeft(_ or _)
 
-  implicit val encoder: Encoder[MediaSink] =
+  given Encoder[MediaSink] =
     Encoder.instance {
       case rtmp: RtmpSink => rtmp.asJson
       case hls: HlsSink => hls.asJson
     }
+
+  given [F[_]]: Storage[F, MediaSink] = {
+    case RtmpSink(url) => ???
+    case HlsSink(sinkName) => ???
+  }
 }
 
-case class RtmpSink private (url: String) extends MediaSink {}
+case class RtmpSink(url: String) extends MediaSink {}
 
 object RtmpSink {
-  implicit val decoder: Codec[RtmpSink] = deriveCodec[RtmpSink]
+  given Codec[RtmpSink] = deriveCodec[RtmpSink]
 
-  def apply(url: String): RtmpSink = new RtmpSink(url)
+  given [F[_]]: Storage[F, MediaSink] =
+    throw new UnsupportedOperationException("Rtmp stream can not be saved to any storage")
 }
 
-case class HlsSink private (path: String) extends MediaSink {}
+
+type SinkName = String
+
+case class HlsSink(sinkName: SinkName) extends MediaSink {}
 
 object HlsSink {
-  implicit val decoder: Codec[HlsSink] = deriveCodec[HlsSink]
+  given Codec[HlsSink] = deriveCodec[HlsSink]
 
-  def apply(path: String): HlsSink = new HlsSink(path)
+  given [F[_] : Async](using fileStorage: Storage[F, Path], folderName: FolderName[HlsSink]): Storage[F, HlsSink] = {
+    def doFrequently[A](work: F[A]): F[A] = Sync[F].fix[A](loop =>
+      for {
+        res <- work
+        _ <- Async[F].sleep(1.second)
+        _ <- loop
+      } yield res
+    )
+
+    hlsSink =>
+      Spawn[F].both[Unit, Unit](
+        doFrequently(
+          Sync[F].delay(os.pwd / folderName(hlsSink) / "output.m3u8")
+            .flatMap(fileStorage.save)
+        ),
+        doFrequently(
+          for {
+            paths <- Sync[F].delay(
+              os.walk(os.pwd / folderName(hlsSink))
+                .filter(_.last.startsWith("segment"))
+                .toList
+            )
+            _ <- paths.map(fileStorage.save).sequence
+            _ <- Sync[F].delay(paths.foreach(os.remove))
+          } yield ()
+        )
+      ).map(_ => ())
+  }
 }
 
 case class MediaStreamImpl[F[_] : StreamingBackend](
@@ -96,5 +135,5 @@ case class MediaStreamImpl[F[_] : StreamingBackend](
                                                      sink: MediaSink,
                                                    ) extends MediaStream[F] {
 
-  override def act: F[Unit] = implicitly[StreamingBackend[F]].stream(source, sink)
+  override def act: F[Unit] = summon[StreamingBackend[F]].stream(source, sink)
 }
