@@ -1,7 +1,7 @@
 package domain
 
-import cats.effect.{Concurrent, Spawn}
-import cats.effect.kernel.{Async, MonadCancel}
+import cats.effect.Spawn
+import cats.effect.kernel.MonadCancel
 import cats.implicits.*
 import domain.persistence.Storage
 import domain.streaming.StreamingBackend
@@ -17,12 +17,12 @@ sealed trait MediaWorkerCommand[F[_]] {
   def act: F[Unit]
 }
 
-case class RecordVideoSource[F[_]: Spawn](source: MediaSource, mediaSink: MediaSink)
-                                         (
-                                    using streamingBackend: StreamingBackend[F],
-                                    storage: Storage[F, MediaSink],
-                                    monadCancel: MonadCancel[F, Throwable]
-                                  )
+case class RecordVideoSource[F[_] : Spawn](source: MediaSource, mediaSink: MediaSink)
+                                          (
+                                            using streamingBackend: StreamingBackend[F],
+                                            storage: Storage[F, MediaSink],
+                                            monadCancel: MonadCancel[F, Throwable]
+                                          )
   extends MediaWorkerCommand[F] {
   override def act: F[Unit] =
     Spawn[F].both(

@@ -3,9 +3,9 @@ package domain.persistence
 import cats.effect.kernel.Clock
 import domain.{HlsSink, Name}
 
-type FolderName[A] = String
+type FolderName[A] = A => String
 
 object FolderName {  
   given [F[_]: Clock](using sinkName: Name[HlsSink]): FolderName[HlsSink] =
-    s"$sinkName${summon[Clock[F]].realTime.toString}"
+    hlsSink => s"${sinkName(hlsSink)}${summon[Clock[F]].realTime.toString}"
 }

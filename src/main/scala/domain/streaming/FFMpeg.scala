@@ -1,12 +1,8 @@
 package domain.streaming
 
 import cats.effect.kernel.Clock
-import cats.effect.std.{Random, UUIDGen}
 import domain.*
 import domain.persistence.FolderName
-import os.{Path, RelPath}
-
-type FFMpeg[A]
 
 object FFMpeg {
   given StreamingResource[MediaSource] =
@@ -22,7 +18,7 @@ object FFMpeg {
     }
 
 
-  given [F[_]: Clock](using folderName: FolderName[HlsSink]): StreamingResource[MediaSink] =
+  given [F[_] : Clock](using folderName: FolderName[HlsSink]): StreamingResource[MediaSink] =
     new StreamingResource[MediaSink] {
 
       override def destination(media: MediaSink): String = media match

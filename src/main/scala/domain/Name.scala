@@ -1,3 +1,3 @@
 package domain
 
-type Name[A] = String
+type Name[A] = A => String
