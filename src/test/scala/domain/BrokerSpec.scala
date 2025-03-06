@@ -4,6 +4,8 @@ import cats.effect.*
 import cats.effect.unsafe.implicits.global
 import cats.implicits.*
 import com.comcast.ip4s.Port
+import domain.command.{RecordVideoSource, RouteCameraToMiddleware, SupplyWebRtcServer}
+import domain.server.ActiveMediaStreams
 import domain.server.persistence.Storage
 import domain.server.streaming.StreamingBackendImpl
 import fs2.{Pure, Stream}
@@ -71,6 +73,8 @@ class BrokerSpec extends flatspec.AnyFlatSpec with MockitoSugar with BeforeAndAf
     given Storage[IO, MediaSink] = Storage.fake
 
     given Spawn[IO] = IO.asyncForIO
+    
+    given ActiveMediaStreams[IO] = ActiveMediaStreams.inMemory[IO]
 
     val stream: Stream[Pure, MediaWorkerCommand[IO]] = Stream(
       RouteCameraToMiddleware(

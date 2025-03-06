@@ -1,10 +1,7 @@
 package domain
 
-import cats.effect.Spawn
-import cats.effect.kernel.MonadCancel
 import cats.implicits.*
-import domain.server.persistence.Storage
-import domain.server.streaming.StreamingBackend
+import domain.command.{RecordVideoSource, RouteCameraToMiddleware, SupplyWebRtcServer}
 import io.circe.*
 import io.circe.generic.auto.*
 import io.circe.parser.*
@@ -13,92 +10,8 @@ import lepus.client.{Message, MessageEncoder, MessageRaw}
 import lepus.std.ChannelCodec
 
 
-sealed trait MediaWorkerCommand[F[_]] {
+trait MediaWorkerCommand[F[_]] {
   def act: F[Unit]
-}
-
-case class RecordVideoSource[F[_] : Spawn](source: MediaSource, mediaSink: MediaSink)
-                                          (
-                                            using streamingBackend: StreamingBackend[F],
-                                            storage: Storage[F, MediaSink],
-                                            monadCancel: MonadCancel[F, Throwable]
-                                          )
-  extends MediaWorkerCommand[F] {
-  override def act: F[Unit] =
-    Spawn[F].both(
-      streamingBackend.stream(source, mediaSink),
-      storage.save(mediaSink)
-    ).map(_ => ())
-}
-
-object RecordVideoSource {
-  given [F[_]]: Encoder[RecordVideoSource[F]] = (rv: RecordVideoSource[F]) => Json.obj(
-    "source" -> rv.source.asJson,
-    "mediaSink" -> rv.mediaSink.asJson
-  )
-
-  given [F[_] : StreamingBackend : Spawn]
-  (using temporal: Storage[F, MediaSink], monadCancel: MonadCancel[F, Throwable])
-  : Decoder[RecordVideoSource[F]] = (c: HCursor) => for {
-    source <- c.downField("source").as[MediaSource]
-    hlsSink <- c.downField("mediaSink").as[MediaSink]
-  } yield RecordVideoSource(source, hlsSink)
-}
-
-case class RouteCameraToMiddleware[F[_]](
-                                          source: MediaSource,
-                                          middleware: MediaSink
-                                        )
-                                        (
-                                          using streamingBackend: StreamingBackend[F],
-                                          monadCancel: MonadCancel[F, Throwable]
-                                        )
-  extends MediaWorkerCommand[F] {
-
-  override def act: F[Unit] =
-    streamingBackend.stream(source, middleware)
-}
-
-object RouteCameraToMiddleware {
-  given [F[_]]: Encoder[RouteCameraToMiddleware[F]] = (rv: RouteCameraToMiddleware[F]) => Json.obj(
-    "source" -> rv.source.asJson,
-    "middleware" -> rv.middleware.asJson
-  )
-
-  given [F[_] : StreamingBackend]
-  (using monadCancel: MonadCancel[F, Throwable])
-  : Decoder[RouteCameraToMiddleware[F]] = (c: HCursor) => for {
-    source <- c.downField("source").as[MediaSource]
-    middleware <- c.downField("middleware").as[MediaSink]
-  } yield RouteCameraToMiddleware(source, middleware)
-}
-
-case class SupplyWebRtcServer[F[_]](
-                                     source: MediaSource,
-                                     webRtc: MediaSink
-                                   )
-                                   (
-                                     using streamingBackend: StreamingBackend[F],
-                                     monadCancel: MonadCancel[F, Throwable]
-                                   )
-  extends MediaWorkerCommand[F] {
-
-  override def act: F[Unit] =
-    streamingBackend.stream(source, webRtc)
-}
-
-object SupplyWebRtcServer {
-  given [F[_]]: Encoder[SupplyWebRtcServer[F]] = (rv: SupplyWebRtcServer[F]) => Json.obj(
-    "source" -> rv.source.asJson,
-    "webRtc" -> rv.webRtc.asJson
-  )
-
-  given [F[_] : StreamingBackend]
-  (using monadCancel: MonadCancel[F, Throwable])
-  : Decoder[SupplyWebRtcServer[F]] = (c: HCursor) => for {
-    source <- c.downField("source").as[MediaSource]
-    webRtc <- c.downField("webRtc").as[MediaSink]
-  } yield SupplyWebRtcServer(source, webRtc)
 }
 
 object MediaWorkerCommand {

@@ -11,7 +11,7 @@ object MediaWorker {
     (for {
       message <- messageSource
       _ <- Stream.eval(message.ack)
-      command = Stream.eval(message.message.act)
-    } yield command).parJoinUnbounded.compile.drain
+      commandEffect = Stream.eval(message.message.act)
+    } yield commandEffect).parJoinUnbounded.compile.drain
   }
 }

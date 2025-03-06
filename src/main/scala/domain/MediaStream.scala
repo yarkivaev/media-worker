@@ -13,23 +13,13 @@ import os.*
 
 import scala.concurrent.duration.*
 
-type MediaStreamId = Int
-
 /**
  * A MediaStream is an entity that represents a data stream flowing from a sink to a source, which is intended to 
  * eventually be integrated and maintained within the hospital system.
  *
  * @tparam F
  */
-trait MediaStream[F[_]] {
-  val id: MediaStreamId
-  val startDateTime: DateTime
-  val stopDateTime: DateTime
-  val source: MediaSource
-  val sink: MediaSink
-
-  def act: F[Unit]
-}
+case class MediaStream(source: MediaSource, sink: MediaSink)
 
 sealed trait MediaSource
 
@@ -125,15 +115,4 @@ object HlsSink {
         )
       ).map(_ => ())
   }
-}
-
-case class MediaStreamImpl[F[_] : StreamingBackend](
-                                                     id: MediaStreamId,
-                                                     startDateTime: DateTime,
-                                                     stopDateTime: DateTime,
-                                                     source: MediaSource,
-                                                     sink: MediaSink,
-                                                   ) extends MediaStream[F] {
-
-  override def act: F[Unit] = summon[StreamingBackend[F]].stream(source, sink)
 }
