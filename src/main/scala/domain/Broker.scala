@@ -1,7 +1,9 @@
 package domain
 
+import cats.Monad
 import cats.effect.kernel.MonadCancel
-import fs2.Stream
+import cats.effect.{Concurrent, Resource}
+import fs2.{Pipe, Stream}
 import lepus.client.*
 import lepus.protocol.domains.*
 import lepus.std.*
@@ -35,4 +37,12 @@ object Broker {
             )
         )
     } yield source
+
+  def messageSink[F[_] : Concurrent : Monad, A: MessageEncoder]
+  (con: Connection[F], queueName: QueueName)
+  (using monadCancel: MonadCancel[F, Throwable]): Resource[F, Pipe[F, Envelope[A], ReturnedMessageRaw]] =
+    for {
+      channel <- con.channel
+      publisher <- Resource.pure(channel.messaging.publisher[A])
+    } yield publisher
 }
