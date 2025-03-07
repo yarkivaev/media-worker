@@ -16,12 +16,14 @@ lazy val root = (project in file("."))
       "dev.hnaderi" %% "lepus-std" % "0.5.4",
       "dev.hnaderi" %% "lepus-circe" % "0.5.4",
       "io.minio" % "minio" % "8.3.4",
+      "io.projectreactor" % "reactor-core" % "3.7.3",
 
       "org.scalatest" %% "scalatest" % "3.2.19" % Test,
       "org.typelevel" %% "cats-effect" % "3.5.7" % Test,
       "org.scalatestplus" %% "mockito-5-10" % "3.2.18.0" % Test,
       "org.testcontainers" % "rabbitmq" % "1.20.5" % Test,
       "org.testcontainers" % "testcontainers" % "1.20.5" % Test,
+      "org.junit.jupiter" % "junit-jupiter" % "5.8.1" % Test,
 
 ),
     scalacOptions += "-Ykind-projector"

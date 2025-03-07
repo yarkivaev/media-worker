@@ -1,41 +1,37 @@
 package domain.command
 
+import cats.effect.Spawn
 import cats.effect.kernel.MonadCancel
 import domain.server.ActiveMediaStreams
+import domain.server.persistence.Storage
 import domain.server.streaming.StreamingBackend
-import domain.{MediaSink, MediaSource, MediaStream, MediaWorkerCommand}
+import domain.{MediaSink, MediaSource, MediaStream}
 import io.circe.*
 import io.circe.generic.auto.*
 import io.circe.syntax.*
 
 
-case class RouteCameraToMiddleware[F[_]](
+case class RouteCameraToMiddleware(
                                           source: MediaSource,
                                           middleware: MediaSink
                                         )
-                                        (
-                                          using streamingBackend: StreamingBackend[F],
-                                          monadCancel: MonadCancel[F, Throwable],
-                                          activeMediaStreams: ActiveMediaStreams[F]
-                                        )
-  extends MediaWorkerCommand[F] {
+  extends MediaWorkerCommand {
 
-  override def act: F[Unit] =
-    activeMediaStreams.manageMediaStream(
+  override def act[F[_] : Spawn : StreamingBackend : ActiveMediaStreams]
+  (using Storage[F, MediaSink], MonadCancel[F, Throwable]): F[Unit] =
+    summon[ActiveMediaStreams[F]].manageMediaStream(
       MediaStream(source, middleware),
-      streamingBackend.stream(source, middleware)
+      summon[StreamingBackend[F]].stream(source, middleware)
     )
 }
 
 object RouteCameraToMiddleware {
-  given [F[_]]: Encoder[RouteCameraToMiddleware[F]] = (rv: RouteCameraToMiddleware[F]) => Json.obj(
+  given Encoder[RouteCameraToMiddleware] = (rv: RouteCameraToMiddleware) => Json.obj(
     "source" -> rv.source.asJson,
     "middleware" -> rv.middleware.asJson
   )
 
-  given [F[_] : StreamingBackend : ActiveMediaStreams]
-  (using monadCancel: MonadCancel[F, Throwable])
-  : Decoder[RouteCameraToMiddleware[F]] = (c: HCursor) => for {
+  given Decoder[RouteCameraToMiddleware] = (c: HCursor) => for {
     source <- c.downField("source").as[MediaSource]
     middleware <- c.downField("middleware").as[MediaSink]
   } yield RouteCameraToMiddleware(source, middleware)

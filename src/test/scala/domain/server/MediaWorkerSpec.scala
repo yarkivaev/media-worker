@@ -6,7 +6,7 @@ import cats.effect.unsafe.implicits.global
 import domain.server.MediaWorker
 import domain.server.streaming.StreamingBackendImpl
 import domain.*
-import domain.command.{RouteCameraToMiddleware, SupplyWebRtcServer}
+import domain.command.{MediaWorkerCommand, RouteCameraToMiddleware, SupplyWebRtcServer}
 import fs2.*
 import org.scalatest.*
 
@@ -19,11 +19,13 @@ class MediaWorkerSpec extends flatspec.AnyFlatSpec with matchers.should.Matchers
 
     val queue = Queue.unbounded[IO, MediaStream]().unsafeRunSync()
 
-    def brokerMessage(command: MediaWorkerCommand[IO]): BrokerMessage[IO, MediaWorkerCommand[IO]] =
-      new BrokerMessage[IO, MediaWorkerCommand[IO]] {
-        val message: MediaWorkerCommand[IO] = command
+    def brokerMessage(command: MediaWorkerCommand): BrokerMessage[IO, MediaWorkerCommand] =
+      new BrokerMessage[IO, MediaWorkerCommand] {
+        val message: MediaWorkerCommand = command
 
         def ack: IO[Unit] = IO.unit
+
+        override def nack: IO[Unit] = IO.unit
       }
 
     given StreamingBackendImpl[IO] = StreamingBackendImpl[IO]()

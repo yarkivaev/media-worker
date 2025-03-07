@@ -1,41 +1,42 @@
 package domain.command
 
+import cats.Applicative
+import cats.effect.Spawn
 import cats.effect.kernel.MonadCancel
 import domain.server.ActiveMediaStreams
+import domain.server.persistence.Storage
 import domain.server.streaming.StreamingBackend
-import domain.{MediaSink, MediaSource, MediaStream, MediaWorkerCommand}
+import domain.{MediaSink, MediaSource, MediaStream}
 import io.circe.*
 import io.circe.generic.auto.*
 import io.circe.syntax.*
+import cats.syntax._
+import cats.implicits._
 
 
-case class SupplyWebRtcServer[F[_]](
-                                     source: MediaSource,
-                                     webRtc: MediaSink
-                                   )
-                                   (
-                                     using streamingBackend: StreamingBackend[F],
-                                     monadCancel: MonadCancel[F, Throwable],
-                                     activeMediaStreams: ActiveMediaStreams[F]
-                                   )
-  extends MediaWorkerCommand[F] {
+case class SupplyWebRtcServer(
+                               source: MediaSource,
+                               webRtc: MediaSink
+                             )
+  extends MediaWorkerCommand {
 
-  override def act: F[Unit] =
-    activeMediaStreams.manageMediaStream(
-      MediaStream(source, webRtc),
-      streamingBackend.stream(source, webRtc)
-    )
+  override def act[F[_] : Spawn : StreamingBackend : ActiveMediaStreams]
+  (using Storage[F, MediaSink], MonadCancel[F, Throwable]): F[Unit] =
+    Applicative[F].pure(println("hello")) 
+//      *>
+//    summon[ActiveMediaStreams[F]].manageMediaStream(
+//      MediaStream(source, webRtc),
+//      summon[StreamingBackend[F]].stream(source, webRtc)
+//    )
 }
 
 object SupplyWebRtcServer {
-  given [F[_]]: Encoder[SupplyWebRtcServer[F]] = (rv: SupplyWebRtcServer[F]) => Json.obj(
+  given Encoder[SupplyWebRtcServer] = (rv: SupplyWebRtcServer) => Json.obj(
     "source" -> rv.source.asJson,
     "webRtc" -> rv.webRtc.asJson
   )
 
-  given [F[_] : StreamingBackend : ActiveMediaStreams]
-  (using monadCancel: MonadCancel[F, Throwable])
-  : Decoder[SupplyWebRtcServer[F]] = (c: HCursor) => for {
+  given Decoder[SupplyWebRtcServer] = (c: HCursor) => for {
     source <- c.downField("source").as[MediaSource]
     webRtc <- c.downField("webRtc").as[MediaSink]
   } yield SupplyWebRtcServer(source, webRtc)
