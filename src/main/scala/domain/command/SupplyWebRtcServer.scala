@@ -1,17 +1,15 @@
 package domain.command
 
-import cats.Applicative
-import cats.effect.Spawn
-import cats.effect.kernel.MonadCancel
+import cats.effect.kernel.{MonadCancel, Sync}
+import cats.effect.{Async, Spawn}
+import cats.implicits.*
+import cats.syntax.*
 import domain.server.ActiveMediaStreams
 import domain.server.persistence.Storage
 import domain.server.streaming.StreamingBackend
 import domain.{MediaSink, MediaSource, MediaStream}
 import io.circe.*
-import io.circe.generic.auto.*
 import io.circe.syntax.*
-import cats.syntax._
-import cats.implicits._
 
 
 case class SupplyWebRtcServer(
@@ -20,14 +18,14 @@ case class SupplyWebRtcServer(
                              )
   extends MediaWorkerCommand {
 
-  override def act[F[_] : Spawn : StreamingBackend : ActiveMediaStreams]
+  override def act[F[_] : Async : StreamingBackend : ActiveMediaStreams]
   (using Storage[F, MediaSink], MonadCancel[F, Throwable]): F[Unit] =
-    Applicative[F].pure(println("hello")) 
-//      *>
-//    summon[ActiveMediaStreams[F]].manageMediaStream(
-//      MediaStream(source, webRtc),
-//      summon[StreamingBackend[F]].stream(source, webRtc)
-//    )
+    Sync[F].pure(println("helloSupply"))
+    >>
+    summon[ActiveMediaStreams[F]].manageMediaStream(
+      MediaStream(source, webRtc),
+      summon[StreamingBackend[F]].stream(source, webRtc)
+    )
 }
 
 object SupplyWebRtcServer {

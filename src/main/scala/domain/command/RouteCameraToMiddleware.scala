@@ -1,6 +1,6 @@
 package domain.command
 
-import cats.effect.Spawn
+import cats.effect.{Async, Spawn}
 import cats.effect.kernel.MonadCancel
 import domain.server.ActiveMediaStreams
 import domain.server.persistence.Storage
@@ -17,7 +17,7 @@ case class RouteCameraToMiddleware(
                                         )
   extends MediaWorkerCommand {
 
-  override def act[F[_] : Spawn : StreamingBackend : ActiveMediaStreams]
+  override def act[F[_] : Async : StreamingBackend : ActiveMediaStreams]
   (using Storage[F, MediaSink], MonadCancel[F, Throwable]): F[Unit] =
     summon[ActiveMediaStreams[F]].manageMediaStream(
       MediaStream(source, middleware),

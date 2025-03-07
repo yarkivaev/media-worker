@@ -21,6 +21,7 @@ object ActiveMediaStreams {
 
     def manageMediaStream(mediaStream: MediaStream, effect: F[Unit]): F[Unit] = {
       for {
+        _ <- Sync[F].delay(println("Start race"))
         d <- Deferred[F, Unit]
         _ <- Sync[F].delay(storage + (mediaStream -> d))
         _ <- Spawn[F].race(
