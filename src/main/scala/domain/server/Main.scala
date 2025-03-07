@@ -38,7 +38,6 @@ object Main extends IOApp {
           )
         )
       )
-      //      messageSink <- Broker.messageSink[IO, MediaWorkerCommand](lepusClient, QueueName("mediaworkercommand"))
     } yield ()).use_.as(ExitCode.Success)
   }
 }

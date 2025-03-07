@@ -1,10 +1,9 @@
 package domain.server.streaming
 
-import cats.{Applicative, Functor}
-import cats.effect.{Async, IO, Resource, Spawn, Sync}
-import domain.{MediaSink, MediaSource}
-import cats.syntax.*
+import cats.Functor
+import cats.effect.{Async, Sync}
 import cats.implicits.*
+import domain.{MediaSink, MediaSource}
 
 import scala.sys.process.*
 
@@ -23,7 +22,7 @@ class FFMpegStreamingBackend[F[_] : Async : RunProcess : Functor]
     Sync[F].delay(println("ffmpeg hello")) >> summon[RunProcess[F]].run(
       command,
       ProcessLogger(line => {
-              println(line)
+        println(line)
       })
     ).useForever.map(_ => ())
   }

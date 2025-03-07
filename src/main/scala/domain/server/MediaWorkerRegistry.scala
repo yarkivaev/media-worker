@@ -1,8 +1,5 @@
 package domain.server
 
-import cats.effect.kernel.*
-import cats.effect.std.{Queue, Random}
-import cats.implicits.*
 import cats.syntax.all.*
 
 type MediaWorkerId = Int

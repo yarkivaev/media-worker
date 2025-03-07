@@ -1,7 +1,7 @@
 package domain.command
 
-import cats.effect.{Async, Spawn}
 import cats.effect.kernel.MonadCancel
+import cats.effect.{Async, Spawn}
 import cats.implicits.*
 import domain.server.ActiveMediaStreams
 import domain.server.persistence.Storage

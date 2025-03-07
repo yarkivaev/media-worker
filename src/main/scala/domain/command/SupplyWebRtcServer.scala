@@ -1,9 +1,8 @@
 package domain.command
 
+import cats.effect.Async
 import cats.effect.kernel.{MonadCancel, Sync}
-import cats.effect.{Async, Spawn}
 import cats.implicits.*
-import cats.syntax.*
 import domain.server.ActiveMediaStreams
 import domain.server.persistence.Storage
 import domain.server.streaming.StreamingBackend
@@ -21,11 +20,11 @@ case class SupplyWebRtcServer(
   override def act[F[_] : Async : StreamingBackend : ActiveMediaStreams]
   (using Storage[F, MediaSink], MonadCancel[F, Throwable]): F[Unit] =
     Sync[F].pure(println("helloSupply"))
-    >>
-    summon[ActiveMediaStreams[F]].manageMediaStream(
-      MediaStream(source, webRtc),
-      summon[StreamingBackend[F]].stream(source, webRtc)
-    )
+      >>
+      summon[ActiveMediaStreams[F]].manageMediaStream(
+        MediaStream(source, webRtc),
+        summon[StreamingBackend[F]].stream(source, webRtc)
+      )
 }
 
 object SupplyWebRtcServer {

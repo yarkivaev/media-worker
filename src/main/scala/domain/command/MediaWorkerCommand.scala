@@ -1,20 +1,17 @@
 package domain.command
 
-import cats.effect.{Async, Spawn}
+import cats.effect.Async
 import cats.effect.kernel.MonadCancel
 import cats.implicits.*
 import domain.MediaSink
-import domain.command.{RecordVideoSource, RouteCameraToMiddleware, SupplyWebRtcServer}
 import domain.server.ActiveMediaStreams
 import domain.server.persistence.Storage
 import domain.server.streaming.StreamingBackend
 import io.circe.*
-import io.circe.generic.auto.*
 import io.circe.parser.*
 import io.circe.syntax.*
 import lepus.client.{Message, MessageDecoder, MessageEncoder, MessageRaw}
 import lepus.std.ChannelCodec
-import io.circe.Encoder.encodeString
 
 
 trait MediaWorkerCommand {
@@ -57,7 +54,7 @@ object MediaWorkerCommand {
 
   given MessageEncoder[MediaWorkerCommand] = msg =>
     MessageEncoder[String].encode(msg.payload.asJson.noSpaces)
-    
-  given (using channelCodec: ChannelCodec[MediaWorkerCommand]): MessageDecoder[MediaWorkerCommand] = raw => 
+
+  given (using channelCodec: ChannelCodec[MediaWorkerCommand]): MessageDecoder[MediaWorkerCommand] = raw =>
     channelCodec.decode(raw)
 }

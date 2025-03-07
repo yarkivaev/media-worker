@@ -3,10 +3,9 @@ package domain.server
 import cats.effect.*
 import cats.effect.std.Queue
 import cats.effect.unsafe.implicits.global
-import domain.server.MediaWorker
-import domain.server.streaming.StreamingBackendImpl
 import domain.*
 import domain.command.{MediaWorkerCommand, RouteCameraToMiddleware, SupplyWebRtcServer}
+import domain.server.streaming.StreamingBackendImpl
 import fs2.*
 import org.scalatest.*
 

@@ -1,9 +1,8 @@
 package domain.server
 
-import domain.MediaStream
 import cats.effect.{Async, Deferred, Spawn, Sync}
-import cats.implicits._
-import cats.syntax._
+import cats.implicits.*
+import domain.MediaStream
 
 import scala.collection.mutable
 
@@ -21,7 +20,6 @@ object ActiveMediaStreams {
 
     def manageMediaStream(mediaStream: MediaStream, effect: F[Unit]): F[Unit] = {
       for {
-        _ <- Sync[F].delay(println("Start race"))
         d <- Deferred[F, Unit]
         _ <- Sync[F].delay(storage + (mediaStream -> d))
         _ <- Spawn[F].race(

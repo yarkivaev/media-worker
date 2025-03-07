@@ -2,7 +2,6 @@ package domain.server.persistence
 
 import cats.effect.IO
 import cats.effect.unsafe.implicits.global
-import domain.server.persistence.Storage
 import io.minio.{GetObjectArgs, ListObjectsArgs, MakeBucketArgs, MinioClient}
 import org.scalatest.{BeforeAndAfterAll, flatspec, matchers}
 import org.testcontainers.containers.GenericContainer
