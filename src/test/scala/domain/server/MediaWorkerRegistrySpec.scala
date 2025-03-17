@@ -1,4 +1,4 @@
-package domain
+package domain.server
 
 import cats.effect.*
 import cats.effect.std.{Queue, Random}

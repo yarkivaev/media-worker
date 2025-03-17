@@ -1,12 +1,13 @@
-package domain.streaming
+package domain.server.streaming
 
 import cats.Functor
-import cats.effect.Sync
+import cats.effect.{Async, Sync}
+import cats.implicits.*
 import domain.{MediaSink, MediaSource}
 
 import scala.sys.process.*
 
-class FFMpegStreamingBackend[F[_] : Sync : RunProcess : Functor]
+class FFMpegStreamingBackend[F[_] : Async : RunProcess : Functor]
 (
   using sourceStreamingResource: StreamingResource[MediaSource],
   sinkStreamingResource: StreamingResource[MediaSink]
@@ -18,11 +19,11 @@ class FFMpegStreamingBackend[F[_] : Sync : RunProcess : Functor]
         ++ Seq("-i", sourceStreamingResource.destination(mediaSource))
         ++ sinkStreamingResource.options(mediaSink).toList.flatMap((key, value) => List(key, value))
         ++ Seq(sinkStreamingResource.destination(mediaSink))
-    RunProcess[F]().run(
+    Sync[F].delay(println("ffmpeg hello")) >> summon[RunProcess[F]].run(
       command,
       ProcessLogger(line => {
-        //      println(line)
+        println(line)
       })
-    ).use_
+    ).useForever.map(_ => ())
   }
 }

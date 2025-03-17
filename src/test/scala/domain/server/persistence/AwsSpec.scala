@@ -1,4 +1,4 @@
-package domain.persistence
+package domain.server.persistence
 
 import cats.effect.IO
 import cats.effect.unsafe.implicits.global
@@ -32,7 +32,7 @@ class AwsSpec extends flatspec.AnyFlatSpec with matchers.should.Matchers with Be
       .credentials("minioadmin", "minioadmin")
       .build
 
-    import aws.given_Storage_F_Path
+    import domain.server.persistence.aws.given_Storage_F_Path
 
     val bucketName = "hello"
     val content = "HelloWorld"

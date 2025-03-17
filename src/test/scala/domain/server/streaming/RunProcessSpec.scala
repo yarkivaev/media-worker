@@ -1,4 +1,4 @@
-package domain.streaming
+package domain.server.streaming
 
 import cats.effect.IO
 import cats.effect.kernel.Async
