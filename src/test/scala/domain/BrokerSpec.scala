@@ -30,7 +30,7 @@ class BrokerSpec extends flatspec.AnyFlatSpec with MockitoSugar with BeforeAndAf
   }
 
   "mediaSink" should "be able to put new MediaWorkerCommands" in {
-    val stream: Stream[Pure, MediaWorkerCommand] = Stream(
+    val stream: Stream[IO, MediaWorkerCommand] = Stream(
       RouteCameraToMiddleware(
         RtmpSource("url"),
         RtmpSink("url")
@@ -49,19 +49,9 @@ class BrokerSpec extends flatspec.AnyFlatSpec with MockitoSugar with BeforeAndAf
       messageSink <- Broker.messageSink[IO, MediaWorkerCommand](queueClient, QueueName("queueName"))
     } yield messageSink)
       .use(
-        pipe =>
-          pipe(
-            stream.map(
-              command =>
-                Envelope(
-                  ExchangeName(""),
-                  ShortString("queueName"),
-                  true,
-                  Message(command)
-                )
-            )
-          ).compile.drain
+        pipe => pipe(stream).compile.drain
       )
+
     publisher.unsafeRunSync()
   }
 

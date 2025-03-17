@@ -11,16 +11,9 @@ trait Client[F[_]] {
 }
 
 object Client {
-  def apply(messageSink: Pipe[IO, Envelope[MediaWorkerCommand], ReturnedMessageRaw]): Client[IO] =
+  def apply(messageSink: Pipe[IO, MediaWorkerCommand, ReturnedMessageRaw]): Client[IO] =
     new Client[IO] {
-      def executeCommand(command: MediaWorkerCommand): IO[Unit] = messageSink(Stream(
-        Envelope(
-          ExchangeName(""),
-          ShortString(""),
-          true,
-          Message(command)
-        )
-      )).compile.toVector.map(println(_))
+      def executeCommand(command: MediaWorkerCommand): IO[Unit] = messageSink(Stream(command)).compile.drain
     }
 
   def printSink: Pipe[IO, Envelope[MediaWorkerCommand], ReturnedMessageRaw] = stream => stream.map(_ => {

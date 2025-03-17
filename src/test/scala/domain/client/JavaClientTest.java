@@ -8,7 +8,7 @@ import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import org.testcontainers.containers.RabbitMQContainer;
 
-public class JavaPakMediaWorkerClientTest {
+public class JavaClientTest {
 
 
     private static final RabbitMQContainer rabbitMQ = new RabbitMQContainer("rabbitmq:3-management")

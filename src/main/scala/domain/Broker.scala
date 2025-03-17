@@ -3,7 +3,7 @@ package domain
 import cats.effect.kernel.MonadCancel
 import cats.effect.{Concurrent, Resource}
 import cats.implicits.*
-import cats.{Applicative, Functor, Monad}
+import cats.{Functor, Monad}
 import fs2.{Pipe, Stream}
 import io.circe.Decoder
 import io.circe.parser.decode
@@ -72,12 +72,26 @@ object Broker {
 
   def messageSink[F[_] : Concurrent : Monad, A: MessageEncoder]
   (con: Connection[F], queueName: QueueName)
-  (using monadCancel: MonadCancel[F, Throwable]): Resource[F, Pipe[F, Envelope[A], ReturnedMessageRaw]] =
-    for {
+  (using monadCancel: MonadCancel[F, Throwable]): Resource[F, Pipe[F, A, ReturnedMessageRaw]] =
+    (for {
       channel <- con.channel
       _ <- Resource.eval(channel.queue.declare(queueName, durable = true))
       publisher <- Resource.pure(channel.messaging.publisher[A])
-    } yield publisher
+    } yield publisher)
+      .map(
+        sink =>
+          messages => sink(
+            messages.map(
+              command =>
+                Envelope(
+                  ExchangeName(""),
+                  queueName,
+                  true,
+                  Message(command)
+                )
+            )
+          )
+      )
 }
 
 
