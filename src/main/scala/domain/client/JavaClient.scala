@@ -14,9 +14,9 @@ trait JavaClient {
 }
 
 object JavaClient {
-  def apply: JavaClient = {
+  def apply(queuePort: Int): JavaClient = {
     val messageSinkResource = for {
-      lepusClient <- LepusClient[IO](port = Port.fromInt(5672).get)
+      lepusClient <- LepusClient[IO](port = Port.fromInt(queuePort).get)
       messageSink <- Broker.messageSink[IO, MediaWorkerCommand](
         lepusClient,
         QueueName("mediaworkercommand")
