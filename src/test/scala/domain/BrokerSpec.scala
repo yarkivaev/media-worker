@@ -13,7 +13,6 @@ import org.scalatest.*
 import org.scalatestplus.mockito.MockitoSugar
 import org.testcontainers.containers.RabbitMQContainer
 
-
 class BrokerSpec extends flatspec.AnyFlatSpec with MockitoSugar with BeforeAndAfterAll {
 
   val rabbitMQ: RabbitMQContainer = new RabbitMQContainer("rabbitmq:3-management")
@@ -48,9 +47,7 @@ class BrokerSpec extends flatspec.AnyFlatSpec with MockitoSugar with BeforeAndAf
       queueClient <- LepusClient[IO](port = Port.fromInt(rabbitMQ.getAmqpPort).get)
       messageSink <- Broker.messageSink[IO, MediaWorkerCommand](queueClient, QueueName("queueName"))
     } yield messageSink)
-      .use(
-        pipe => pipe(stream).compile.drain
-      )
+      .use(pipe => pipe(stream).compile.drain)
 
     publisher.unsafeRunSync()
   }
@@ -77,17 +74,21 @@ class BrokerSpec extends flatspec.AnyFlatSpec with MockitoSugar with BeforeAndAf
 
     val brokerClient = LepusClient[IO](port = Port.fromInt(rabbitMQ.getAmqpPort).get)
 
-    val subscribe: Stream[IO, MediaWorkerCommand] = Stream.resource(brokerClient)
-      .flatMap(Broker.messageSource[IO, MediaWorkerCommand](_, queueName)).flatMap(message => {
+    val subscribe: Stream[IO, MediaWorkerCommand] = Stream
+      .resource(brokerClient)
+      .flatMap(Broker.messageSource[IO, MediaWorkerCommand](_, queueName))
+      .flatMap(message => {
         Stream.eval(IO.println(message.message) *> message.ack).map(_ => message.message)
       })
 
-    val publish: Stream[IO, Unit] = stream.covary[IO].flatMap(word =>
-      Stream.eval(
-        (brokerClient.flatMap(_.channel).use { channel =>
+    val publish: Stream[IO, Unit] = stream
+      .covary[IO]
+      .flatMap(word =>
+        Stream.eval((brokerClient.flatMap(_.channel).use { channel =>
           channel.queue.declare(queueName, durable = true) *>
             channel.messaging.publish(ExchangeName(""), queueName, word)
-        })))
+        }))
+      )
 
     val streamedData = publish.zipRight(subscribe).take(3).compile.toList.unsafeRunSync()
 

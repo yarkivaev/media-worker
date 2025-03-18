@@ -7,8 +7,9 @@ import domain.server.streaming.StreamingBackend
 import fs2.*
 
 object MediaWorker {
-  def apply[F[_] : Async : StreamingBackend : ActiveMediaStreams]
-  (messageSource: Stream[F, BrokerMessage[F, MediaWorkerCommand]]): F[Unit] = {
+  def apply[F[_]: Async: StreamingBackend: ActiveMediaStreams](
+    messageSource: Stream[F, BrokerMessage[F, MediaWorkerCommand]]
+  ): F[Unit] = {
     (for {
       message <- messageSource
       //      _ <- Stream.eval(message.ack)

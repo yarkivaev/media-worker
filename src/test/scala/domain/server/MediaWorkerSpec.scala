@@ -13,7 +13,6 @@ import scala.concurrent.duration.DurationInt
 
 class MediaWorkerSpec extends flatspec.AnyFlatSpec with matchers.should.Matchers {
 
-
   "MediaWorker" should "process media streams and handle stopping correctly" in {
 
     val queue = Queue.unbounded[IO, MediaStream]().unsafeRunSync()
@@ -31,18 +30,22 @@ class MediaWorkerSpec extends flatspec.AnyFlatSpec with matchers.should.Matchers
 
     given ActiveMediaStreams[IO] = ActiveMediaStreams.inMemory[IO]
 
-    val fiber: Fiber[IO, Throwable, Unit] = Async[IO].start(MediaWorker[IO](
-      Stream(
-        RouteCameraToMiddleware(
-          RtmpSource("url"),
-          RtmpSink("url")
-        ),
-        SupplyWebRtcServer(
-          RtmpSource("url"),
-          RtmpSink("url")
+    val fiber: Fiber[IO, Throwable, Unit] = Async[IO]
+      .start(
+        MediaWorker[IO](
+          Stream(
+            RouteCameraToMiddleware(
+              RtmpSource("url"),
+              RtmpSink("url")
+            ),
+            SupplyWebRtcServer(
+              RtmpSource("url"),
+              RtmpSink("url")
+            )
+          ).map(brokerMessage)
         )
-      ).map(brokerMessage)
-    )).unsafeRunSync()
+      )
+      .unsafeRunSync()
 
     IO.sleep(3.second).unsafeRunSync()
 

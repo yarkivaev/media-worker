@@ -13,12 +13,11 @@ import os.*
 
 import scala.concurrent.duration.*
 
-/**
- * A MediaStream is an entity that represents a data stream flowing from a sink to a source, which is intended to 
- * eventually be integrated and maintained within the hospital system.
- *
- * @tparam F
- */
+/** A MediaStream is an entity that represents a data stream flowing from a sink to a source, which is intended to
+  * eventually be integrated and maintained within the hospital system.
+  *
+  * @tparam F
+  */
 case class MediaStream(source: MediaSource, sink: MediaSink)
 
 sealed trait MediaSource
@@ -61,11 +60,11 @@ object MediaSink {
   given Encoder[MediaSink] =
     Encoder.instance {
       case rtmp: RtmpSink => rtmp.asJson
-      case hls: HlsSink => hls.asJson
+      case hls: HlsSink   => hls.asJson
     }
 
   given [F[_]]: Storage[F, MediaSink] = {
-    case RtmpSink(url) => ???
+    case RtmpSink(url)     => ???
     case HlsSink(sinkName) => ???
   }
 }
@@ -79,7 +78,6 @@ object RtmpSink {
     throw new UnsupportedOperationException("Rtmp stream can not be saved to any storage")
 }
 
-
 type SinkName = String
 
 case class HlsSink(sinkName: SinkName) extends MediaSink {}
@@ -87,7 +85,7 @@ case class HlsSink(sinkName: SinkName) extends MediaSink {}
 object HlsSink {
   given Codec[HlsSink] = deriveCodec[HlsSink]
 
-  given [F[_] : Async](using fileStorage: Storage[F, Path], folderName: FolderName[HlsSink]): Storage[F, HlsSink] = {
+  given [F[_]: Async](using fileStorage: Storage[F, Path], folderName: FolderName[HlsSink]): Storage[F, HlsSink] = {
     def doFrequently[A](work: F[A]): F[A] = Sync[F].fix[A](loop =>
       for {
         res <- work
@@ -97,22 +95,25 @@ object HlsSink {
     )
 
     hlsSink =>
-      Spawn[F].both[Unit, Unit](
-        doFrequently(
-          Sync[F].delay(os.pwd / folderName(hlsSink) / "output.m3u8")
-            .flatMap(fileStorage.save)
-        ),
-        doFrequently(
-          for {
-            paths <- Sync[F].delay(
-              os.walk(os.pwd / folderName(hlsSink))
-                .filter(_.last.startsWith("segment"))
-                .toList
-            )
-            _ <- paths.map(fileStorage.save).sequence
-            _ <- Sync[F].delay(paths.foreach(os.remove))
-          } yield ()
+      Spawn[F]
+        .both[Unit, Unit](
+          doFrequently(
+            Sync[F]
+              .delay(os.pwd / folderName(hlsSink) / "output.m3u8")
+              .flatMap(fileStorage.save)
+          ),
+          doFrequently(
+            for {
+              paths <- Sync[F].delay(
+                os.walk(os.pwd / folderName(hlsSink))
+                  .filter(_.last.startsWith("segment"))
+                  .toList
+              )
+              _ <- paths.map(fileStorage.save).sequence
+              _ <- Sync[F].delay(paths.foreach(os.remove))
+            } yield ()
+          )
         )
-      ).map(_ => ())
+        .map(_ => ())
   }
 }

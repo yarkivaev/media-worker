@@ -13,29 +13,33 @@ import io.circe.syntax.*
 import lepus.client.{Message, MessageDecoder, MessageEncoder, MessageRaw}
 import lepus.std.ChannelCodec
 
-
 trait MediaWorkerCommand {
-  def act[F[_] : Async : StreamingBackend : ActiveMediaStreams]
-  (using Storage[F, MediaSink], MonadCancel[F, Throwable]): F[Unit]
+  def act[F[_]: Async: StreamingBackend: ActiveMediaStreams](using
+    Storage[F, MediaSink],
+    MonadCancel[F, Throwable]
+  ): F[Unit]
 }
 
 object MediaWorkerCommand {
   given Encoder[MediaWorkerCommand] = Encoder.instance {
-    case record: RecordVideoSource => record.asJson
-    case route: RouteCameraToMiddleware => route.asJson
+    case record: RecordVideoSource        => record.asJson
+    case route: RouteCameraToMiddleware   => route.asJson
     case supplyWebRtc: SupplyWebRtcServer => supplyWebRtc.asJson
   }
 
-  given (using Decoder[RecordVideoSource], Decoder[RouteCameraToMiddleware], Decoder[SupplyWebRtcServer])
-  : Decoder[MediaWorkerCommand] =
+  given (using
+    Decoder[RecordVideoSource],
+    Decoder[RouteCameraToMiddleware],
+    Decoder[SupplyWebRtcServer]
+  ): Decoder[MediaWorkerCommand] =
     List[Decoder[MediaWorkerCommand]](
       Decoder[RecordVideoSource].widen,
       Decoder[RouteCameraToMiddleware].widen,
       Decoder[SupplyWebRtcServer].widen
     ).reduceLeft(_ or _)
 
-  given (using encoder: Encoder[MediaWorkerCommand], decoder: Decoder[MediaWorkerCommand])
-  : Codec[MediaWorkerCommand] = Codec.from(decoder, encoder)
+  given (using encoder: Encoder[MediaWorkerCommand], decoder: Decoder[MediaWorkerCommand]): Codec[MediaWorkerCommand] =
+    Codec.from(decoder, encoder)
 
   given ChannelCodec[String] = ChannelCodec.plain[String]
 
@@ -52,8 +56,7 @@ object MediaWorkerCommand {
         } yield message
     }
 
-  given MessageEncoder[MediaWorkerCommand] = msg =>
-    MessageEncoder[String].encode(msg.payload.asJson.noSpaces)
+  given MessageEncoder[MediaWorkerCommand] = msg => MessageEncoder[String].encode(msg.payload.asJson.noSpaces)
 
   given (using channelCodec: ChannelCodec[MediaWorkerCommand]): MessageDecoder[MediaWorkerCommand] = raw =>
     channelCodec.decode(raw)

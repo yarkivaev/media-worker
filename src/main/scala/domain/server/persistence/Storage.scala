@@ -14,7 +14,7 @@ object Storage {
   }
 }
 
-class S3FileStorage[F[_] : Sync] extends Storage[F, File] {
+class S3FileStorage[F[_]: Sync] extends Storage[F, File] {
 
   override def save(obj: File): F[Unit] = Sync[F].delay(()) // Save file to s3
 }
