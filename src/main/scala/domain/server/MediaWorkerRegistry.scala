@@ -7,8 +7,7 @@ type MediaWorkerId = Int
 enum MediaWorkerStatus:
   case Active, Stopped
 
-/** A registry that collects all workers in the hospital
-  *
+/** A registry that collects all workers in the hospital. Useful what many pak media workers works together.
   * @tparam F
   */
 trait MediaWorkerRegistry[F[_]] {

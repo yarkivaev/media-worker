@@ -4,6 +4,12 @@ import cats.effect.{IO, Sync}
 
 import java.io.File
 
+/** Represents external file storage
+  * @tparam F
+  *   Effect
+  * @tparam A
+  *   Stored content
+  */
 trait Storage[F[_], A] {
   def save(obj: A): F[Unit]
 }

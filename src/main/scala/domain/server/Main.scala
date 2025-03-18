@@ -12,6 +12,8 @@ import lepus.protocol.domains.QueueName
 import scala.language.postfixOps
 import scala.runtime.stdLibPatches.Predef.summon
 
+/** Pak media worker service entrypoint.
+  */
 object Main extends IOApp {
 
   def run(args: List[String]): IO[ExitCode] = {

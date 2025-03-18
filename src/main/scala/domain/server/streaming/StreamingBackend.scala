@@ -8,19 +8,29 @@ import domain.{MediaSink, MediaSource}
 
 import scala.concurrent.duration.*
 
+/** Represents some resource in hospital system that can be streamed.
+  * @tparam A
+  *   Resource type
+  */
 trait StreamingResource[A] {
   def destination(media: A): String
 
   def options(media: A): Map[String, String]
 }
 
+/** Streaming backend that runs stream from source to sink
+  * @tparam F
+  *   Effect
+  */
 trait StreamingBackend[F[_]] {
 
-  /** Runs new streaming process in separate thread
-    *
+  /** Runs stream from source to sink
     * @param mediaSource
+    *   stream source
     * @param mediaSink
+    *   stream sink
     * @return
+    *   Effect that runs streaming process
     */
   def stream(mediaSource: MediaSource, mediaSink: MediaSink): F[Unit]
 }

@@ -6,6 +6,10 @@ import fs2.{Pipe, Stream}
 import lepus.client.{Envelope, Message, ReturnedMessage, ReturnedMessageRaw}
 import lepus.protocol.domains.{ExchangeName, ShortString}
 
+/** Effectful client.
+  * @tparam F
+  *   Effect
+  */
 trait Client[F[_]] {
   def executeCommand(command: MediaWorkerCommand): F[Unit]
 }
