@@ -27,7 +27,8 @@ class AwsSpec extends flatspec.AnyFlatSpec with matchers.should.Matchers with Be
   }
 
   "aws" should "store a file in MinIO" in {
-    given minioClient: MinioClient = MinioClient.builder()
+    given minioClient: MinioClient = MinioClient
+      .builder()
       .endpoint(s"http://${container.getHost}:${container.getMappedPort(9000)}")
       .credentials("minioadmin", "minioadmin")
       .build
@@ -52,8 +53,12 @@ class AwsSpec extends flatspec.AnyFlatSpec with matchers.should.Matchers with Be
     // Use the storage and check for file upload
     val result: Unit = storage.save(dummyPath).unsafeRunSync()
 
-    val fileName = minioClient.listObjects(ListObjectsArgs.builder().bucket(bucketName).build())
-      .iterator().next().get().objectName()
+    val fileName = minioClient
+      .listObjects(ListObjectsArgs.builder().bucket(bucketName).build())
+      .iterator()
+      .next()
+      .get()
+      .objectName()
 
     val source = Source.fromInputStream(
       minioClient.getObject(GetObjectArgs.builder().bucket(bucketName).`object`(fileName).build())

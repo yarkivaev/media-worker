@@ -18,7 +18,7 @@ trait RunProcess[F[_]] {
 }
 
 object RunProcess {
-  def apply[F[_] : Sync](using monadCancel: MonadCancel[F, Throwable]): RunProcess[F] = new RunProcess[F]:
+  def apply[F[_]: Sync](using monadCancel: MonadCancel[F, Throwable]): RunProcess[F] = new RunProcess[F]:
     override def run(processBuilder: ProcessBuilder): Resource[F, Process] =
       Resource.make(Sync[F].delay(processBuilder.run()))(process => Sync[F].delay(process.destroy()))
 
@@ -33,7 +33,6 @@ object RunProcess {
 
     override def run(processBuilder: ProcessBuilder, log: ProcessLogger, connectInput: Boolean): Resource[F, Process] =
       Resource.make(Sync[F].delay(processBuilder.run(log, connectInput)))(process => Sync[F].delay(process.destroy()))
-
 
   def fake: RunProcess[IO] = new RunProcess[IO] {
     private val fakeProcess: Process = new Process:

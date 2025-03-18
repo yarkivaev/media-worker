@@ -15,7 +15,7 @@ trait ActiveMediaStreams[F[_]] {
 }
 
 object ActiveMediaStreams {
-  def inMemory[F[_] : Async]: ActiveMediaStreams[F] = new ActiveMediaStreams[F] {
+  def inMemory[F[_]: Async]: ActiveMediaStreams[F] = new ActiveMediaStreams[F] {
     private val storage: mutable.Map[MediaStream, Deferred[F, Unit]] = mutable.Map.empty[MediaStream, Deferred[F, Unit]]
 
     def manageMediaStream(mediaStream: MediaStream, effect: F[Unit]): F[Unit] = {

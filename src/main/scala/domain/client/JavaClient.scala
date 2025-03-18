@@ -24,9 +24,8 @@ object JavaClient {
     } yield messageSink
 
     new JavaClient {
-      def executeCommand(command: MediaWorkerCommand): Unit = messageSinkResource.use(messageSink =>
-        Client(messageSink).executeCommand(command)
-      ).unsafeRunSync()
+      def executeCommand(command: MediaWorkerCommand): Unit =
+        messageSinkResource.use(messageSink => Client(messageSink).executeCommand(command)).unsafeRunSync()
     }
   }
 }

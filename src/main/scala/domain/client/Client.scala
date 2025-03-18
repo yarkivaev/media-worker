@@ -16,14 +16,15 @@ object Client {
       def executeCommand(command: MediaWorkerCommand): IO[Unit] = messageSink(Stream(command)).compile.drain
     }
 
-  def printSink: Pipe[IO, Envelope[MediaWorkerCommand], ReturnedMessageRaw] = stream => stream.map(_ => {
-    println("log")
-    ReturnedMessage(
-      null,
-      ShortString("hello"),
-      ExchangeName("hello"),
-      ShortString("null"),
-      null
-    )
-  })
+  def printSink: Pipe[IO, Envelope[MediaWorkerCommand], ReturnedMessageRaw] = stream =>
+    stream.map(_ => {
+      println("log")
+      ReturnedMessage(
+        null,
+        ShortString("hello"),
+        ExchangeName("hello"),
+        ShortString("null"),
+        null
+      )
+    })
 }

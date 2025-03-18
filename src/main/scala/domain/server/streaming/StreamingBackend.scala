@@ -15,17 +15,18 @@ trait StreamingResource[A] {
 }
 
 trait StreamingBackend[F[_]] {
-  /**
-   * Runs new streaming process in separate thread
-   *
-   * @param mediaSource
-   * @param mediaSink
-   * @return
-   */
+
+  /** Runs new streaming process in separate thread
+    *
+    * @param mediaSource
+    * @param mediaSink
+    * @return
+    */
   def stream(mediaSource: MediaSource, mediaSink: MediaSink): F[Unit]
 }
 
-class StreamingBackendImpl[F[_] : Async : Monad](implicit val monadCancel: MonadCancel[F, Throwable]) extends StreamingBackend[F] {
+class StreamingBackendImpl[F[_]: Async: Monad](implicit val monadCancel: MonadCancel[F, Throwable])
+  extends StreamingBackend[F] {
   override def stream(mediaSource: MediaSource, mediaSink: MediaSink): F[Unit] = {
     def loop: F[Unit] =
       for {

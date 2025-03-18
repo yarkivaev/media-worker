@@ -10,7 +10,6 @@ import scala.sys.process.*
 
 class RunProcessSpec extends flatspec.AnyFlatSpec with matchers.should.Matchers {
 
-
   "Process" should "be cancelable" in {
     val command =
       """
@@ -19,14 +18,19 @@ class RunProcessSpec extends flatspec.AnyFlatSpec with matchers.should.Matchers 
     var counter = 0
     var last_counter = 0
     val fiber =
-      Async[IO].start(RunProcess[IO].run(
-        command,
-        ProcessLogger(line => {
-          println(line)
-          counter = counter + 1
-        }
+      Async[IO]
+        .start(
+          RunProcess[IO]
+            .run(
+              command,
+              ProcessLogger(line => {
+                println(line)
+                counter = counter + 1
+              })
+            )
+            .useForever
         )
-      ).useForever).unsafeRunSync()
+        .unsafeRunSync()
 
     (IO.sleep(2.second) *>
       fiber.cancel).unsafeRunSync()

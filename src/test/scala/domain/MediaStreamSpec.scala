@@ -10,21 +10,17 @@ import scala.concurrent.duration.*
 
 class MediaStreamSpec extends flatspec.AnyFlatSpec with matchers.should.Matchers {
 
-
   "HlsSink" should "should save itself" in {
     var outputs = 0
     var segments = 0
 
-    given Storage[IO, Path] = path => IO {
-      if path.last.startsWith("output") then
-        outputs = outputs + 1
-      else
-        ()
-      if path.last.startsWith("segment") then
-        segments = segments + 1
-      else
-        ()
-    }
+    given Storage[IO, Path] = path =>
+      IO {
+        if path.last.startsWith("output") then outputs = outputs + 1
+        else ()
+        if path.last.startsWith("segment") then segments = segments + 1
+        else ()
+      }
 
     val folderName = "test_storage"
     if (os.exists(os.pwd / folderName)) {
