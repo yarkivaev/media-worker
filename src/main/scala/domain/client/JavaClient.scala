@@ -9,6 +9,8 @@ import domain.command.MediaWorkerCommand
 import lepus.client.LepusClient
 import lepus.protocol.domains.QueueName
 
+/** Accessible from Java client
+  */
 trait JavaClient {
   def executeCommand(command: MediaWorkerCommand): Unit
 }

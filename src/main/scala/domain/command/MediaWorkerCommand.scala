@@ -13,7 +13,16 @@ import io.circe.syntax.*
 import lepus.client.{Message, MessageDecoder, MessageEncoder, MessageRaw}
 import lepus.std.ChannelCodec
 
+/** Command for media worker to execute some action
+  */
 trait MediaWorkerCommand {
+
+  /** executes command action
+    * @tparam F
+    *   Effect
+    * @return
+    *   Effect that process command action
+    */
   def act[F[_]: Async: StreamingBackend: ActiveMediaStreams](using
     Storage[F, MediaSink],
     MonadCancel[F, Throwable]

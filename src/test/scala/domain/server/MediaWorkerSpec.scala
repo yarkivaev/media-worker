@@ -19,7 +19,7 @@ class MediaWorkerSpec extends flatspec.AnyFlatSpec with matchers.should.Matchers
 
     def brokerMessage(command: MediaWorkerCommand): BrokerMessage[IO, MediaWorkerCommand] =
       new BrokerMessage[IO, MediaWorkerCommand] {
-        val message: MediaWorkerCommand = command
+        val content: MediaWorkerCommand = command
 
         def ack: IO[Unit] = IO.unit
 

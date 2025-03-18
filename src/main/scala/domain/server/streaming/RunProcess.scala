@@ -5,6 +5,10 @@ import cats.effect.{IO, Sync}
 
 import scala.sys.process.{Process, ProcessBuilder, ProcessIO, ProcessLogger}
 
+/** Resource process wrapper
+  * @tparam F
+  *   Effect
+  */
 trait RunProcess[F[_]] {
   def run(processBuilder: ProcessBuilder): Resource[F, Process]
 

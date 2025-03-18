@@ -10,11 +10,28 @@ import io.circe.parser.decode
 import lepus.client.*
 import lepus.protocol.domains.*
 
+/** Represents message, obtained from broker queue. Provides ability to acknowledge message or reject it.
+  * @tparam F
+  *   Runtime
+  * @tparam T
+  *   Message content type
+  */
 trait BrokerMessage[F[_], T] {
-  val message: T
 
+  /** Message content
+    */
+  val content: T
+
+  /** Acknowledge message.
+    * @return
+    *   Effect that acknowledges message
+    */
   def ack: F[Unit]
 
+  /** Not acknowledge message.
+    * @return
+    *   Effect that rejects message
+    */
   def nack: F[Unit]
 }
 
@@ -22,7 +39,7 @@ object BrokerMessage {
   given [F[_]: Functor]: Functor[[A] =>> BrokerMessage[F, A]] with
     def map[A, B](fa: BrokerMessage[F, A])(f: A => B): BrokerMessage[F, B] =
       new {
-        val message: B = f(fa.message)
+        val content: B = f(fa.content)
 
         def ack: F[Unit] = fa.ack
 
@@ -32,6 +49,24 @@ object BrokerMessage {
 
 object Broker {
 
+  /** Source of messages from broker queue.
+    *
+    * Provides effectful streams of broker messages. Decodes message content using provided decoder.
+    * @param con
+    *   RabbitMQ connection
+    * @param queueName
+    *   queue name
+    * @param monadCancel
+    *   monadCancel
+    * @param decoder
+    *   content decoder
+    * @tparam F
+    *   Effect
+    * @tparam A
+    *   content type
+    * @return
+    *   Stream of broker messages
+    */
   def messageSource[F[_], A](con: Connection[F], queueName: QueueName)(using
     monadCancel: MonadCancel[F, Throwable],
     decoder: Decoder[A]
@@ -39,11 +74,11 @@ object Broker {
     for {
       brokerMessage <- messageSourceRaw(con, queueName)
       decodedEither = brokerMessage.map(raw => decode[A](raw))
-      decoded <- decodedEither.message match {
+      decoded <- decodedEither.content match {
         case Left(e) => Stream.eval(decodedEither.nack) >> Stream.empty
         case Right(decodedMessage) =>
           Stream.emit[F, BrokerMessage[F, A]](new {
-            val message: A = decodedMessage
+            val content: A = decodedMessage
 
             def ack: F[Unit] = decodedEither.ack
 
@@ -53,7 +88,23 @@ object Broker {
     } yield decoded
   }
 
-  def messageSourceRaw[F[_]](con: Connection[F], queueName: QueueName)(using
+  /** Source of messages from broker queue.
+    *
+    * Provides effectful streams of broker messages.
+    * @param con
+    *   RabbitMQ connection
+    * @param queueName
+    *   queue name
+    * @param monadCancel
+    *   monadCancel
+    * @param decoder
+    *   content decoder
+    * @tparam F
+    *   Effect
+    * @return
+    *   Stream of broker messages
+    */
+  private def messageSourceRaw[F[_]](con: Connection[F], queueName: QueueName)(using
     monadCancel: MonadCancel[F, Throwable],
     decoder: MessageDecoder[String]
   ): Stream[F, BrokerMessage[F, String]] =
@@ -63,13 +114,27 @@ object Broker {
       deliveredMessage <- channel.messaging
         .consumeRaw(queueName, noAck = false)
     } yield new BrokerMessage[F, String] {
-      val message: String = decoder.decode(deliveredMessage.message).right.get.payload
+      val content: String = decoder.decode(deliveredMessage.message).right.get.payload
 
       def ack: F[Unit] = channel.messaging.ack(deliveredMessage.deliveryTag)
 
       def nack: F[Unit] = channel.messaging.nack(deliveredMessage.deliveryTag)
     }
 
+  /** Sink that sends data to broker queue
+    * @param con
+    *   RabbitMQ connection
+    * @param queueName
+    *   queue name
+    * @param monadCancel
+    *   monadCancel
+    * @tparam F
+    *   Effect
+    * @tparam A
+    *   Content type
+    * @return
+    *   Resource with function that forwards data stream to broker queue
+    */
   def messageSink[F[_]: Concurrent: Monad, A: MessageEncoder](con: Connection[F], queueName: QueueName)(using
     monadCancel: MonadCancel[F, Throwable]
   ): Resource[F, Pipe[F, A, ReturnedMessageRaw]] =
@@ -92,19 +157,3 @@ object Broker {
           )
       )
 }
-
-//Stream(new BrokerMessage[F, A] {
-//  val message: A = (()).asInstanceOf[A]
-//
-//  def ack: F[Unit] = Applicative[F].pure(())
-//})
-//Stream.resource(con.channel).flatMap(ch => ch.messaging.consumeRaw(queueName, noAck = false).map( mes =>
-//{
-//  println(mes)
-//  new BrokerMessage[F, A] {
-//    val message: A = (()).asInstanceOf[A]
-//
-//    def ack: F[Unit] = Applicative[F].pure(())
-//  }
-//}
-//))
