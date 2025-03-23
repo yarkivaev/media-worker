@@ -2,7 +2,7 @@ package domain.server
 
 import cats.effect.kernel.Clock
 import cats.effect.{ExitCode, IO, IOApp, Resource}
-import com.comcast.ip4s.Port
+import com.comcast.ip4s.*
 import domain.*
 import domain.command.MediaWorkerCommand
 import domain.server.streaming.{FFMpegStreamingBackend, RunProcess, StreamingBackend}
@@ -31,7 +31,10 @@ object Main extends IOApp {
     given ActiveMediaStreams[IO] = ActiveMediaStreams.inMemory[IO]
 
     (for {
-      lepusClient <- LepusClient[IO](port = Port.fromInt(5672).get)
+      lepusClient <- LepusClient[IO](
+        host = Host.fromString(args.head).get,
+        port = Port.fromInt(args.tail.headOption.map(_.toInt).getOrElse(5672)).get
+      )
       mediaWorker <- Resource.eval(
         MediaWorker(
           Broker.messageSource[IO, MediaWorkerCommand](

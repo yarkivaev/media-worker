@@ -1,10 +1,12 @@
 package domain.client
 
-import cats.effect.IO
+import cats.effect.{IO, Resource}
+import com.comcast.ip4s.Port
+import domain.Broker
 import domain.command.MediaWorkerCommand
 import fs2.{Pipe, Stream}
-import lepus.client.{Envelope, Message, ReturnedMessage, ReturnedMessageRaw}
-import lepus.protocol.domains.{ExchangeName, ShortString}
+import lepus.client.{Envelope, LepusClient, Message, ReturnedMessage, ReturnedMessageRaw}
+import lepus.protocol.domains.{ExchangeName, QueueName, ShortString}
 
 /** Effectful client.
   * @tparam F
@@ -19,6 +21,16 @@ object Client {
     new Client[IO] {
       def executeCommand(command: MediaWorkerCommand): IO[Unit] = messageSink(Stream(command)).compile.drain
     }
+
+  def apply(queuePort: Int): Resource[IO, Client[IO]] = {
+    for {
+      lepusClient <- LepusClient[IO](port = Port.fromInt(queuePort).get)
+      messageSink <- Broker.messageSink[IO, MediaWorkerCommand](
+        lepusClient,
+        QueueName("mediaworkercommand")
+      )
+    } yield Client(messageSink)
+  }
 
   def printSink: Pipe[IO, Envelope[MediaWorkerCommand], ReturnedMessageRaw] = stream =>
     stream.map(_ => {

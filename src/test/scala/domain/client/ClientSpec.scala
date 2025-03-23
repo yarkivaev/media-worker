@@ -1,6 +1,5 @@
 package domain.client
 
-import domain.Broker
 import org.scalatest.{BeforeAndAfterAll, flatspec}
 import org.scalatestplus.mockito.MockitoSugar
 import org.testcontainers.containers.RabbitMQContainer
@@ -22,6 +21,6 @@ class ClientSpec extends flatspec.AnyFlatSpec with MockitoSugar with BeforeAndAf
 
   "client" should "be able to send MediaWorkerCommand" in {
 
-//    Client.apply(Broker.)
+    //    Client.apply(Broker.)
   }
 }
