@@ -1,10 +1,15 @@
+ThisBuild / organization := "hirus"
+ThisBuild / name := "pak-media-worker"
 ThisBuild / version := "0.1.0-SNAPSHOT"
 
 ThisBuild / scalaVersion := "3.3.5"
 
+enablePlugins(DockerPlugin)
+
 lazy val root = (project in file("."))
   .settings(
-    name := "pak-media-worker",
+    name := (ThisBuild / name).value,
+    organization := (ThisBuild / organization).value,
     libraryDependencies ++= Seq(
       "org.typelevel" %% "cats-effect" % "3.5.7",
       "com.github.nscala-time" %% "nscala-time" % "3.0.0",
@@ -24,5 +29,64 @@ lazy val root = (project in file("."))
       "org.testcontainers" % "testcontainers" % "1.20.5" % Test,
       "org.junit.jupiter" % "junit-jupiter" % "5.8.1" % Test
     ),
-    scalacOptions += "-Ykind-projector"
+    scalacOptions += "-Ykind-projector",
+    docker / dockerfile := {
+      val jarFile: File = (Compile / packageBin / sbt.Keys.`package`).value
+      val classpath = (Compile / managedClasspath).value
+      val mainclass = (Compile / packageBin / mainClass).value.getOrElse(sys.error("Expected exactly one main class"))
+      val jarTarget = s"/app/${jarFile.getName}"
+      val classpathString = classpath.files
+        .map("/app/" + _.getName)
+        .mkString(":") + ":" + jarTarget
+      new Dockerfile {
+        from("openjdk:17-jdk-slim")
+        runRaw("apt-get update && apt-get install -y --no-install-recommends ffmpeg && rm -rf /var/lib/apt/lists/*")
+        add(classpath.files, "/app/")
+        add(jarFile, jarTarget)
+        entryPoint("java", "-cp", classpathString, mainclass)
+      }
+    },
+    docker / imageNames := Seq(
+      ImageName(s"${organization.value}/${name.value}:latest"),
+      ImageName(
+        namespace = Some(organization.value),
+        repository = name.value,
+        tag = Some("v" + version.value)
+      )
+    )
+  )
+
+lazy val buildDockerBeforeTests = taskKey[Unit]("Build Docker image before running tests in integration module")
+
+buildDockerBeforeTests := {
+  println("Building Docker image before running tests in the integration module...")
+  (root / docker).value
+}
+
+lazy val integration = (project in file("integration"))
+  .dependsOn(root)
+  .settings(
+    publish / skip := true,
+    libraryDependencies ++= Seq(
+      "com.dimafeng" %% "testcontainers-scala-core" % "0.43.0",
+      "com.dimafeng" %% "testcontainers-scala-scalatest" % "0.43.0",
+      "com.dimafeng" %% "testcontainers-scala-rabbitmq" % "0.43.0",
+      "org.scalatest" %% "scalatest" % "3.2.19",
+      "com.github.kokorin.jaffree" % "jaffree" % "2024.08.29"
+    ),
+    (Test / test) := ((Test / test) dependsOn (root / buildDockerBeforeTests)).value,
+    Compile / sourceGenerators += Def.task {
+      val file = (Compile / sourceManaged).value / "generated" / "ProjectBuildInfo.scala"
+      val content =
+        s"""|package generated
+            |
+            |object ProjectBuildInfo {
+            |  val organization: String = "${(ThisBuild / organization).value}"
+            |  val name: String = "${(ThisBuild / name).value}"
+            |  val version: String = "${if (version.value == "latest") version.value else "v" + version.value}"
+            |}
+            |""".stripMargin
+      IO.write(file, content)
+      Seq(file)
+    }.taskValue
   )

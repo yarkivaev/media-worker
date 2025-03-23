@@ -17,17 +17,9 @@ trait JavaClient {
 
 object JavaClient {
   def apply(queuePort: Int): JavaClient = {
-    val messageSinkResource = for {
-      lepusClient <- LepusClient[IO](port = Port.fromInt(queuePort).get)
-      messageSink <- Broker.messageSink[IO, MediaWorkerCommand](
-        lepusClient,
-        QueueName("mediaworkercommand")
-      )
-    } yield messageSink
-
     new JavaClient {
       def executeCommand(command: MediaWorkerCommand): Unit =
-        messageSinkResource.use(messageSink => Client(messageSink).executeCommand(command)).unsafeRunSync()
+        Client(queuePort).use(client => client.executeCommand(command)).unsafeRunSync()
     }
   }
 }

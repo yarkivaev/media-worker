@@ -12,6 +12,7 @@ import lepus.std.ChannelCodec
 import org.scalatest.*
 import org.scalatestplus.mockito.MockitoSugar
 import org.testcontainers.containers.RabbitMQContainer
+import cats.effect.unsafe.implicits.global
 
 class BrokerSpec extends flatspec.AnyFlatSpec with MockitoSugar with BeforeAndAfterAll {
 
