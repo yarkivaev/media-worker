@@ -40,6 +40,11 @@ build/
 
 ### VS Code ###
 .vscode/
+.bloop/
+.metals/
+project/.bloop/
+project/metals.sbt
+project/project/
 
 ### Mac OS ###
 .DS_Store
