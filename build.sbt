@@ -53,7 +53,10 @@ lazy val root = (project in file("."))
         repository = name.value,
         tag = Some("v" + version.value)
       )
-    )
+    ),
+    publishTo := Some(("Nexus Repository" at "http://212.67.12.16:8081/repository/maven-snapshots/").withAllowInsecureProtocol(true)),
+    credentials += Credentials("Sonatype Nexus Repository Manager", "212.67.12.16", "yaroslav", "ii4aP7Du"), //"pak-service", "uFc7Fy6bCXQQ"),
+    publishMavenStyle := true
   )
 
 lazy val buildDockerBeforeTests = taskKey[Unit]("Build Docker image before running tests in integration module")
