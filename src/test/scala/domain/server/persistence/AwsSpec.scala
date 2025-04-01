@@ -1,5 +1,6 @@
 package domain.server.persistence
 
+import cats.effect.std.Semaphore
 import cats.effect.IO
 import cats.effect.unsafe.implicits.global
 import io.minio.{GetObjectArgs, ListObjectsArgs, MakeBucketArgs, MinioClient}
@@ -46,7 +47,9 @@ class AwsSpec extends flatspec.AnyFlatSpec with matchers.should.Matchers with Be
     os.makeDir(folderPath)
     os.write(dummyPath, content)
 
-    minioClient.makeBucket(MakeBucketArgs.builder().bucket(bucketName).build())
+    // minioClient.makeBucket(MakeBucketArgs.builder().bucket(bucketName).build())
+
+    given (String => IO[Semaphore[IO]]) = _ => Semaphore[IO](1)
 
     val storage = summon[Storage[IO, Path]]
 

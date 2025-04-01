@@ -5,6 +5,8 @@ import domain.BrokerMessage
 import domain.command.MediaWorkerCommand
 import domain.server.streaming.StreamingBackend
 import fs2.*
+import domain.MediaSink
+import domain.server.persistence.Storage
 
 object MediaWorker {
 
@@ -18,7 +20,7 @@ object MediaWorker {
     */
   def apply[F[_]: Async: StreamingBackend: ActiveMediaStreams](
     messageSource: Stream[F, BrokerMessage[F, MediaWorkerCommand]]
-  ): F[Unit] = {
+  )(using Storage[F, MediaSink]): F[Unit] = {
     (for {
       message <- messageSource
       commandEffect = Stream.eval(message.content.act)

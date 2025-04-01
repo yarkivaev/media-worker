@@ -1,11 +1,11 @@
-import cats.effect.IO
+import cats.effect.{IO, Sync}
 import cats.effect.unsafe.implicits.global
 import com.dimafeng.testcontainers.lifecycle.and
 import com.dimafeng.testcontainers.scalatest.TestContainersForAll
-import com.dimafeng.testcontainers.{GenericContainer, RabbitMQContainer}
+import com.dimafeng.testcontainers.{GenericContainer, RabbitMQContainer, MinIOContainer}
 import com.github.kokorin.jaffree.ffprobe.FFprobe
 import domain.client.Client
-import domain.command.RouteCameraToMiddleware
+import domain.command.RecordVideoSource
 import domain.{RtmpSink, RtspSource}
 import org.scalatest.flatspec
 import org.testcontainers.containers.Network
@@ -13,10 +13,13 @@ import org.testcontainers.containers.Network.newNetwork
 
 import scala.concurrent.duration.DurationInt
 import scala.util.Try
+import domain.HlsSink
+import io.minio.{MinioClient, GetObjectArgs}
 
-class RtspToRtmp extends flatspec.AnyFlatSpec with TestContainersForAll {
+class RtspToHlsS3 extends flatspec.AnyFlatSpec with TestContainersForAll {
 
-  override type Containers = GenericContainer and GenericContainer and RabbitMQContainer and GenericContainer
+  override type Containers = GenericContainer and GenericContainer and RabbitMQContainer and GenericContainer and
+    MinIOContainer
 
   override def startContainers(): Containers = {
     val network: Network = newNetwork()
@@ -41,6 +44,13 @@ class RtspToRtmp extends flatspec.AnyFlatSpec with TestContainersForAll {
       }
     })
     rabbitMQ.start()
+    val s3 = MinIOContainer().configure(container => {
+      container.setNetwork(network)
+      container.withCreateContainerCmdModifier { cmd =>
+        cmd.withName("s3")
+      }
+    })
+    s3.start()
     val mediaWorker = MediaWorker("broker", 5672).configure(container => {
       container.setNetwork(network)
       container.withCreateContainerCmdModifier { cmd =>
@@ -48,53 +58,51 @@ class RtspToRtmp extends flatspec.AnyFlatSpec with TestContainersForAll {
       }
     })
     mediaWorker.start()
-    rtspServer and rtspStream and rabbitMQ and mediaWorker
+    rtspServer and rtspStream and rabbitMQ and mediaWorker and s3
   }
 
   "mediaSink" should "be able to put new MediaWorkerCommands" in {
     print(getClass.getClassLoader.getResource("dummy-rtsp-server.yml"))
     withContainers { containers =>
       {
-        val mediaWorker = containers.tail
-        val rabbitMq: RabbitMQContainer = containers.head.tail
-        val rtspServer: GenericContainer = containers.head.head.head
-        val rtspStream: GenericContainer = containers.head.head.tail
+        val s3 = containers.tail
+        val mediaWorker = containers.head.tail
+        val rabbitMq: RabbitMQContainer = containers.head.head.tail
+        val rtspServer: GenericContainer = containers.head.head.head.head
+        val rtspStream: GenericContainer = containers.head.head.head.tail
+        val minioClient = MinioClient
+          .builder()
+          .endpoint(f"http://localhost:${s3.mappedPort(9000)}/")
+          .credentials("miniouser", "miniopassword")
+          .build()
+        def getFileFromS3(fileName: String) =
+          Sync[IO].delay {
+            val request = GetObjectArgs
+              .builder()
+              .bucket("first-camera")
+              .`object`(fileName)
+              .build()
+            val response = minioClient
+              .getObject(request)
+          }
         (for {
           client <- Client(rabbitMq.amqpPort)
         } yield client)
           .use(client =>
             for {
               _ <- client.executeCommand(
-                RouteCameraToMiddleware(
+                RecordVideoSource(
                   RtspSource(
                     f"rtsp://rtsp-server:8554/test"
                   ),
-                  RtmpSink(
-                    f"rtmp://rtsp-server:1935/new_stream"
+                  HlsSink(
+                    f"first_camera"
                   )
                 )
               )
-              _ <- IO.sleep(10.second)
-              probe <- IO.delay {
-                Try(
-                  FFprobe
-                    .atPath()
-                    .setShowStreams(true)
-                    .setInput(s"rtmp://localhost:${rtspServer.mappedPort(1935)}/new_stream")
-                    .execute()
-                )
-                  .map(_ => true)
-                  .recover {
-                    case th: Throwable => {
-                      println(th.getClass())
-                      false
-                    }
-                  }
-                  .get
-              }
-              _ <- IO.delay {
-                assert(probe)
-              }
+              _ <- IO.sleep(30.second)
+              _ <- getFileFromS3("output.m3u8")
+              _ <- getFileFromS3("segment_000.ts")
             } yield ()
           )
           .unsafeRunSync()

@@ -21,7 +21,8 @@ lazy val root = (project in file("."))
       "dev.hnaderi" %% "lepus-std" % "0.5.4",
       "dev.hnaderi" %% "lepus-circe" % "0.5.4",
       "io.minio" % "minio" % "8.3.4",
-      "io.projectreactor" % "reactor-core" % "3.7.3",
+      "io.projectreactor" % "reactor-core" % "3.7.3", // Why do I need reactor?
+      "com.github.pureconfig" %% "pureconfig-core" % "0.17.8",
       "org.scalatest" %% "scalatest" % "3.2.19" % Test,
       "org.typelevel" %% "cats-effect" % "3.5.7" % Test,
       "org.scalatestplus" %% "mockito-5-10" % "3.2.18.0" % Test,
@@ -54,7 +55,9 @@ lazy val root = (project in file("."))
         tag = Some("v" + version.value)
       )
     ),
-    publishTo := Some(("Nexus Repository" at "http://212.67.12.16:8081/repository/maven-snapshots/").withAllowInsecureProtocol(true)),
+    publishTo := Some(
+      ("Nexus Repository" at "http://212.67.12.16:8081/repository/maven-snapshots/").withAllowInsecureProtocol(true)
+    ),
     credentials += Credentials("Sonatype Nexus Repository Manager", "212.67.12.16", "pak-service", "uFc7Fy6bCXQQ"),
     publishMavenStyle := true
   )
@@ -74,6 +77,7 @@ lazy val integration = (project in file("integration"))
       "com.dimafeng" %% "testcontainers-scala-core" % "0.43.0",
       "com.dimafeng" %% "testcontainers-scala-scalatest" % "0.43.0",
       "com.dimafeng" %% "testcontainers-scala-rabbitmq" % "0.43.0",
+      "com.dimafeng" %% "testcontainers-scala-minio" % "0.43.0",
       "org.scalatest" %% "scalatest" % "3.2.19",
       "com.github.kokorin.jaffree" % "jaffree" % "2024.08.29"
     ),

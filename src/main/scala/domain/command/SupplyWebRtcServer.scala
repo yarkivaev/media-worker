@@ -19,12 +19,10 @@ case class SupplyWebRtcServer(
     Storage[F, MediaSink],
     MonadCancel[F, Throwable]
   ): F[Unit] =
-    Sync[F].pure(println("helloSupply"))
-      >>
-        summon[ActiveMediaStreams[F]].manageMediaStream(
-          MediaStream(source, webRtc),
-          summon[StreamingBackend[F]].stream(source, webRtc)
-        )
+    summon[ActiveMediaStreams[F]].manageMediaStream(
+      MediaStream(source, webRtc),
+      summon[StreamingBackend[F]].stream(source, webRtc)
+    )
 }
 
 object SupplyWebRtcServer {
