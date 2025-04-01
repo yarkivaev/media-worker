@@ -8,6 +8,7 @@ import domain.command.{MediaWorkerCommand, RouteCameraToMiddleware, SupplyWebRtc
 import domain.server.streaming.StreamingBackendImpl
 import fs2.*
 import org.scalatest.*
+import domain.server.persistence.Storage
 
 import scala.concurrent.duration.DurationInt
 
@@ -29,6 +30,8 @@ class MediaWorkerSpec extends flatspec.AnyFlatSpec with matchers.should.Matchers
     given StreamingBackendImpl[IO] = StreamingBackendImpl[IO]()
 
     given ActiveMediaStreams[IO] = ActiveMediaStreams.inMemory[IO]
+
+    given Storage[IO, MediaSink] = mediaSink => IO.unit
 
     val fiber: Fiber[IO, Throwable, Unit] = Async[IO]
       .start(

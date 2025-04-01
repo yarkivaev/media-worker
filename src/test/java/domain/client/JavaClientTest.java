@@ -35,7 +35,5 @@ public class JavaClientTest {
                         new HlsSink("recordThis")
                 )
         );
-
-        System.out.println("test");
     }
 }

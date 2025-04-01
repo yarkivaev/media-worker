@@ -28,19 +28,20 @@ class MediaStreamSpec extends flatspec.AnyFlatSpec with matchers.should.Matchers
     }
     os.makeDir(os.pwd / folderName)
 
-    given FolderName[HlsSink] = _ => folderName
+    given FolderName[IO, HlsSink] = _ => IO.pure(folderName)
 
-    Async[IO].start(summon[Storage[IO, HlsSink]].save(HlsSink("sinkName"))).unsafeRunSync()
+    Async[IO].start(summon[Storage[IO, HlsSink]].save(HlsSink("test_storage"))).unsafeRunSync()
 
+    os.write(os.pwd / folderName / "output.m3u8", "hello world")
     os.write(os.pwd / folderName / "segment_001.ts", "hello world")
 
-    IO.sleep(2.second).unsafeRunSync()
+    IO.sleep(5.second).unsafeRunSync()
 
     assert(!os.exists(os.pwd / folderName / "segment_001.ts"))
     assert(outputs > 0)
     assert(segments == 1)
 
-    os.remove(os.pwd / folderName)
+    os.remove.all(os.pwd / folderName)
 
   }
 }

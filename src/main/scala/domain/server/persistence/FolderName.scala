@@ -2,14 +2,12 @@ package domain.server.persistence
 
 import cats.effect.kernel.Clock
 import domain.{HlsSink, Name}
+import cats.effect.kernel.Sync
+
+import cats.implicits._
 
 /** Provides folder name, where object A should be stored
   * @tparam A
   *   stored object type
   */
-type FolderName[A] = A => String
-
-object FolderName {
-  given [F[_]: Clock](using sinkName: Name[HlsSink]): FolderName[HlsSink] =
-    hlsSink => s"${sinkName(hlsSink)}${summon[Clock[F]].realTime.toString}"
-}
+type FolderName[F[_], A] = A => F[String]

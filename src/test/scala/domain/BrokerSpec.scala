@@ -79,7 +79,7 @@ class BrokerSpec extends flatspec.AnyFlatSpec with MockitoSugar with BeforeAndAf
       .resource(brokerClient)
       .flatMap(Broker.messageSource[IO, MediaWorkerCommand](_, queueName))
       .flatMap(message => {
-        Stream.eval(IO.println(message.content) *> message.ack).map(_ => message.content)
+        Stream.eval(message.ack).map(_ => message.content)
       })
 
     val publish: Stream[IO, Unit] = stream

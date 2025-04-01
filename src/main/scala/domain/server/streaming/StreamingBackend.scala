@@ -12,10 +12,10 @@ import scala.concurrent.duration.*
   * @tparam A
   *   Resource type
   */
-trait StreamingResource[A] {
-  def destination(media: A): String
+trait StreamingResource[F[_], A] {
+  def destination(media: A): F[String]
 
-  def options(media: A): Map[String, String]
+  def options(media: A): F[Map[String, String]]
 }
 
 /** Streaming backend that runs stream from source to sink
