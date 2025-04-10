@@ -37,16 +37,16 @@ object FFMpeg {
         case hlsSink: HlsSink =>
           for {
             name <- folderName(hlsSink)
-          } yield 
-            Map(
-              "-c:v" -> "libx264", "-preset" -> "fast",
-              "-c:a" -> "aac",
-              "-max_muxing_queue_size" -> "1024",
-              "-f" -> "hls",
-              "-hls_time" -> "10",
-              "-hls_list_size" -> "0",
-              "-hls_segment_filename" -> s"$name/segment_%03d.ts"
-            )
+          } yield Map(
+            "-c:v" -> "libx264",
+            "-preset" -> "fast",
+            "-c:a" -> "aac",
+            "-max_muxing_queue_size" -> "1024",
+            "-f" -> "hls",
+            "-hls_time" -> "10",
+            "-hls_list_size" -> "0",
+            "-hls_segment_filename" -> s"$name/segment_%03d.ts"
+          )
     }
 
 }
