@@ -73,10 +73,10 @@ object HlsSink {
       val folderPath = os.pwd / sinkName(hlsSink)
       for {
         _ <- Sync[F].delay {
-            if (!os.exists(folderPath)) {
-              os.makeDir.all(folderPath)
-            }
+          if (!os.exists(folderPath)) {
+            os.makeDir.all(folderPath)
           }
+        }
       } yield sinkName(hlsSink)
     }
 

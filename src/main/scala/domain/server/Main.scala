@@ -49,7 +49,8 @@ object Main extends IOApp {
       bucketSems = mutable.Map.empty[String, Semaphore[IO]]
       given (String => IO[Semaphore[IO]]) = (bucketName: String) => {
         bucketIntroduceSem.permit.use(_ =>
-          bucketSems.get(bucketName)
+          bucketSems
+            .get(bucketName)
             .map(Applicative[IO].pure(_))
             .getOrElse({
               Semaphore[IO](1).map(sem => {

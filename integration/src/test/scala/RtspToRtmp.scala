@@ -16,89 +16,50 @@ import scala.util.Try
 
 class RtspToRtmp extends flatspec.AnyFlatSpec with TestContainersForAll {
 
-  override type Containers = GenericContainer and GenericContainer and RabbitMQContainer and GenericContainer
+  override type Containers = Setup.SetupType
 
-  override def startContainers(): Containers = {
-    val network: Network = newNetwork()
-    val rtspServer = DummyRtspServer().configure(container => {
-      container.setNetwork(network)
-      container.withCreateContainerCmdModifier { cmd =>
-        cmd.withName("rtsp-server")
-      }
-    })
-    rtspServer.start()
-    val rtspStream = DummyRtspStream("rtsp-server", 8554).configure(container => {
-      container.setNetwork(network)
-      container.withCreateContainerCmdModifier { cmd =>
-        cmd.withName("rtsp-stream")
-      }
-    })
-    rtspStream.start()
-    val rabbitMQ = RabbitMQContainer("rabbitmq:3-management").configure(container => {
-      container.setNetwork(network)
-      container.withCreateContainerCmdModifier { cmd =>
-        cmd.withName("broker")
-      }
-    })
-    rabbitMQ.start()
-    val mediaWorker = MediaWorker("broker", 5672).configure(container => {
-      container.setNetwork(network)
-      container.withCreateContainerCmdModifier { cmd =>
-        cmd.withName("media-worker")
-      }
-    })
-    mediaWorker.start()
-    rtspServer and rtspStream and rabbitMQ and mediaWorker
-  }
+  override def startContainers(): Containers = Setup.setup
 
   "mediaSink" should "be able to put new MediaWorkerCommands" in {
-    print(getClass.getClassLoader.getResource("dummy-rtsp-server.yml"))
-    withContainers { containers =>
-      {
-        val mediaWorker = containers.tail
-        val rabbitMq: RabbitMQContainer = containers.head.tail
-        val rtspServer: GenericContainer = containers.head.head.head
-        val rtspStream: GenericContainer = containers.head.head.tail
-        (for {
-          client <- Client(rabbitMq.amqpPort)
-        } yield client)
-          .use(client =>
-            for {
-              _ <- client.executeCommand(
-                RouteCameraToMiddleware(
-                  RtspSource(
-                    f"rtsp://rtsp-server:8554/test"
-                  ),
-                  RtmpSink(
-                    f"rtmp://rtsp-server:1935/new_stream"
-                  )
+    withContainers(
+      Setup
+        .client(_)
+        .use((client, relatedContainers) =>
+          for {
+            _ <- client.executeCommand(
+              RouteCameraToMiddleware(
+                RtspSource(
+                  f"rtsp://${relatedContainers.rtspServer.networkAliases.head}:8554/test"
+                ),
+                RtmpSink(
+                  f"rtmp://${relatedContainers.rtspServer.networkAliases.head}:1935/new_stream"
                 )
               )
-              _ <- IO.sleep(10.second)
-              probe <- IO.delay {
-                Try(
-                  FFprobe
-                    .atPath()
-                    .setShowStreams(true)
-                    .setInput(s"rtmp://localhost:${rtspServer.mappedPort(1935)}/new_stream")
-                    .execute()
-                )
-                  .map(_ => true)
-                  .recover {
-                    case th: Throwable => {
-                      println(th.getClass())
-                      false
-                    }
+            )
+            _ <- IO.sleep(10.second)
+            probe <- IO.delay {
+              Try(
+                FFprobe
+                  .atPath()
+                  .setShowStreams(true)
+                  .setInput(s"rtmp://localhost:${relatedContainers.rtspServer.mappedPort(1935)}/new_stream")
+                  .execute()
+              )
+                .map(_ => true)
+                .recover {
+                  case th: Throwable => {
+                    println(th.getClass())
+                    false
                   }
-                  .get
-              }
-              _ <- IO.delay {
-                assert(probe)
-              }
-            } yield ()
-          )
-          .unsafeRunSync()
-      }
-    }
+                }
+                .get
+            }
+            _ <- IO.delay {
+              assert(probe)
+            }
+          } yield ()
+        )
+        .unsafeRunSync()
+    )
   }
 }

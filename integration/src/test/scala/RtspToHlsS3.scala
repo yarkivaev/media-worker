@@ -18,95 +18,47 @@ import io.minio.{MinioClient, GetObjectArgs}
 
 class RtspToHlsS3 extends flatspec.AnyFlatSpec with TestContainersForAll {
 
-  override type Containers = GenericContainer and GenericContainer and RabbitMQContainer and GenericContainer and
-    MinIOContainer
+  override type Containers = Setup.SetupType
 
-  override def startContainers(): Containers = {
-    val network: Network = newNetwork()
-    val rtspServer = DummyRtspServer().configure(container => {
-      container.setNetwork(network)
-      container.withCreateContainerCmdModifier { cmd =>
-        cmd.withName("rtsp-server")
-      }
-    })
-    rtspServer.start()
-    val rtspStream = DummyRtspStream("rtsp-server", 8554).configure(container => {
-      container.setNetwork(network)
-      container.withCreateContainerCmdModifier { cmd =>
-        cmd.withName("rtsp-stream")
-      }
-    })
-    rtspStream.start()
-    val rabbitMQ = RabbitMQContainer("rabbitmq:3-management").configure(container => {
-      container.setNetwork(network)
-      container.withCreateContainerCmdModifier { cmd =>
-        cmd.withName("broker")
-      }
-    })
-    rabbitMQ.start()
-    val s3 = MinIOContainer().configure(container => {
-      container.setNetwork(network)
-      container.withCreateContainerCmdModifier { cmd =>
-        cmd.withName("s3")
-      }
-    })
-    s3.start()
-    val mediaWorker = MediaWorker("broker", 5672).configure(container => {
-      container.setNetwork(network)
-      container.withCreateContainerCmdModifier { cmd =>
-        cmd.withName("media-worker")
-      }
-    })
-    mediaWorker.start()
-    rtspServer and rtspStream and rabbitMQ and mediaWorker and s3
-  }
+  override def startContainers(): Containers = Setup.setup
 
   "mediaSink" should "be able to put new MediaWorkerCommands" in {
-    print(getClass.getClassLoader.getResource("dummy-rtsp-server.yml"))
-    withContainers { containers =>
-      {
-        val s3 = containers.tail
-        val mediaWorker = containers.head.tail
-        val rabbitMq: RabbitMQContainer = containers.head.head.tail
-        val rtspServer: GenericContainer = containers.head.head.head.head
-        val rtspStream: GenericContainer = containers.head.head.head.tail
-        val minioClient = MinioClient
-          .builder()
-          .endpoint(f"http://localhost:${s3.mappedPort(9000)}/")
-          .credentials("miniouser", "miniopassword")
-          .build()
-        def getFileFromS3(fileName: String) =
-          Sync[IO].delay {
-            val request = GetObjectArgs
-              .builder()
-              .bucket("first-camera")
-              .`object`(fileName)
-              .build()
-            val response = minioClient
-              .getObject(request)
-          }
-        (for {
-          client <- Client(rabbitMq.amqpPort)
-        } yield client)
-          .use(client =>
-            for {
-              _ <- client.executeCommand(
-                RecordVideoSource(
-                  RtspSource(
-                    f"rtsp://rtsp-server:8554/test"
-                  ),
-                  HlsSink(
-                    f"first_camera"
-                  )
+    withContainers(
+      Setup
+        .client(_)
+        .use((client, relatedContainers) => {
+          val minioClient = MinioClient
+            .builder()
+            .endpoint(f"http://localhost:${relatedContainers.s3.mappedPort(9000)}/")
+            .credentials("miniouser", "miniopassword")
+            .build()
+          def getFileFromS3(fileName: String) =
+            Sync[IO].delay {
+              val request = GetObjectArgs
+                .builder()
+                .bucket("first-camera")
+                .`object`(fileName)
+                .build()
+              val response = minioClient
+                .getObject(request)
+            }
+          for {
+            _ <- client.executeCommand(
+              RecordVideoSource(
+                RtspSource(
+                  f"rtsp://${relatedContainers.rtspServer.networkAliases.head}:8554/test"
+                ),
+                HlsSink(
+                  f"first_camera"
                 )
               )
-              _ <- IO.sleep(30.second)
-              _ <- getFileFromS3("output.m3u8")
-              _ <- getFileFromS3("segment_000.ts")
-            } yield ()
-          )
-          .unsafeRunSync()
-      }
-    }
+            )
+            _ <- IO.sleep(30.second)
+            _ <- getFileFromS3("output.m3u8")
+            _ <- getFileFromS3("segment_000.ts")
+          } yield ()
+        })
+        .unsafeRunSync()
+    )
   }
 }
