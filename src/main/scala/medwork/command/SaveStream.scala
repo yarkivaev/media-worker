@@ -14,7 +14,7 @@ case class SaveStream(source: MediaSource, mediaSink: MediaSink) extends MediaWo
   self =>
 
   override def toJson: Json = self.asJson
-  
+
   override def act[F[_]: Async: StreamingBackend: ActiveMediaStreams](using
     Storage[F, MediaSink],
     MonadCancel[F, Throwable]
