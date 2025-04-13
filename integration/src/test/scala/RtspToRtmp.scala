@@ -4,9 +4,9 @@ import com.dimafeng.testcontainers.lifecycle.and
 import com.dimafeng.testcontainers.scalatest.TestContainersForAll
 import com.dimafeng.testcontainers.{GenericContainer, RabbitMQContainer}
 import com.github.kokorin.jaffree.ffprobe.FFprobe
-import domain.client.Client
-import domain.command.RouteCameraToMiddleware
-import domain.{RtmpSink, RtspSource}
+import medwork.client.Client
+import medwork.command.RedirectStream
+import medwork.{RtmpSink, RtspSource}
 import org.scalatest.flatspec
 import org.testcontainers.containers.Network
 import org.testcontainers.containers.Network.newNetwork
@@ -27,7 +27,7 @@ class RtspToRtmp extends flatspec.AnyFlatSpec with TestContainersForAll {
         .use((client, relatedContainers) =>
           for {
             _ <- client.executeCommand(
-              RouteCameraToMiddleware(
+              RedirectStream(
                 RtspSource(
                   f"rtsp://${relatedContainers.rtspServer.networkAliases.head}:8554/test"
                 ),

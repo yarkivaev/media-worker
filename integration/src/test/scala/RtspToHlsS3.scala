@@ -4,16 +4,16 @@ import com.dimafeng.testcontainers.lifecycle.and
 import com.dimafeng.testcontainers.scalatest.TestContainersForAll
 import com.dimafeng.testcontainers.{GenericContainer, RabbitMQContainer, MinIOContainer}
 import com.github.kokorin.jaffree.ffprobe.FFprobe
-import domain.client.Client
-import domain.command.RecordVideoSource
-import domain.{RtmpSink, RtspSource}
+import medwork.client.Client
+import medwork.command.SaveStream
+import medwork.{RtmpSink, RtspSource}
 import org.scalatest.flatspec
 import org.testcontainers.containers.Network
 import org.testcontainers.containers.Network.newNetwork
 
 import scala.concurrent.duration.DurationInt
 import scala.util.Try
-import domain.HlsSink
+import medwork.HlsSink
 import io.minio.{MinioClient, GetObjectArgs}
 
 class RtspToHlsS3 extends flatspec.AnyFlatSpec with TestContainersForAll {
@@ -44,7 +44,7 @@ class RtspToHlsS3 extends flatspec.AnyFlatSpec with TestContainersForAll {
             }
           for {
             _ <- client.executeCommand(
-              RecordVideoSource(
+              SaveStream(
                 RtspSource(
                   f"rtsp://${relatedContainers.rtspServer.networkAliases.head}:8554/test"
                 ),

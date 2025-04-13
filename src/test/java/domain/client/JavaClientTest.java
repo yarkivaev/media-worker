@@ -1,8 +1,8 @@
-package domain.client;
+package medwork.client;
 
-import domain.HlsSink;
-import domain.RtmpSource;
-import domain.command.RecordVideoSource;
+import medwork.HlsSink;
+import medwork.RtmpSource;
+import medwork.command.SaveStream;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
@@ -30,7 +30,7 @@ public class JavaClientTest {
 
 
         client.executeCommand(
-                new RecordVideoSource(
+                new SaveStream(
                         new RtmpSource("rtmpSource"),
                         new HlsSink("recordThis")
                 )

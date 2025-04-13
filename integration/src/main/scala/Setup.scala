@@ -5,7 +5,7 @@ import org.testcontainers.containers.Network
 import org.testcontainers.containers.Network.newNetwork
 import cats.effect.kernel.Resource
 import cats.effect.IO
-import domain.client.Client
+import medwork.client.Client
 
 object Setup {
   type SetupType = GenericContainer and GenericContainer and RabbitMQContainer and GenericContainer and MinIOContainer
@@ -50,7 +50,7 @@ object Setup {
     rtspServer and rtspStream and rabbitMQ and mediaWorker and s3
   }
 
-  def client: SetupType => Resource[IO, (domain.client.Client[cats.effect.IO], RelatedContainers)] = containers => {
+  def client: SetupType => Resource[IO, (medwork.client.Client[cats.effect.IO], RelatedContainers)] = containers => {
     val s3 = containers.tail
     val mediaWorker = containers.head.tail
     val rabbitMq: RabbitMQContainer = containers.head.head.tail
