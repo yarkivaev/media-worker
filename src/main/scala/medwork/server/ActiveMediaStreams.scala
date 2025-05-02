@@ -1,8 +1,14 @@
 package medwork.server
 
 import cats.effect.{Async, Deferred, Spawn, Sync}
+import cats.effect.kernel.MonadCancel
 import cats.implicits.*
 import medwork.MediaStream
+import medwork.MediaSink
+import medwork.server.streaming.StreamingBackend
+import medwork.server.persistence.Storage
+import cats.syntax._
+import cats.effect._
 
 import scala.collection.mutable
 
@@ -22,7 +28,7 @@ trait ActiveMediaStreams[F[_]] {
     * @return
     *   Effect that manages media stream
     */
-  def manageMediaStream(mediaStream: MediaStream, effect: F[Unit]): F[Unit]
+  def manageMediaStream(mediaStream: MediaStream): F[Unit]
 
   /** Checks if a collection have contains mediaStream.
     * @param mediaStream
@@ -42,16 +48,19 @@ trait ActiveMediaStreams[F[_]] {
 }
 
 object ActiveMediaStreams {
-  def inMemory[F[_]: Async]: ActiveMediaStreams[F] = new ActiveMediaStreams[F] {
+  def inMemory[F[_]: Async: StreamingBackend](using
+    storage: Storage[F, MediaSink],
+    mc: MonadCancel[F, Throwable]
+  ): ActiveMediaStreams[F] = new ActiveMediaStreams[F] {
     private val storage: mutable.Map[MediaStream, Deferred[F, Unit]] = mutable.Map.empty[MediaStream, Deferred[F, Unit]]
 
-    def manageMediaStream(mediaStream: MediaStream, effect: F[Unit]): F[Unit] = {
+    def manageMediaStream(mediaStream: MediaStream): F[Unit] = {
       for {
         d <- Deferred[F, Unit]
-        _ <- Sync[F].delay(storage + (mediaStream -> d))
+        _ <- Sync[F].delay({storage += (mediaStream -> d)})
         _ <- Spawn[F].race(
           d.get,
-          effect
+          mediaStream.act
         )
       } yield ()
     }

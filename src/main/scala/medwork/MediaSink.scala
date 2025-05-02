@@ -9,6 +9,9 @@ import io.circe.generic.semiauto.*
 import io.circe.syntax.*
 import io.circe.{Codec, Decoder, Encoder}
 import os.*
+import cats.kernel.Hash
+import io.circe.Json
+import io.circe.DecodingFailure
 
 import scala.concurrent.duration.*
 import cats.MonadError
@@ -40,6 +43,11 @@ object MediaSink {
     case RtmpSink(url) => monadError.raiseError(RuntimeException("Can not save rtmp stream"))
     case sink: HlsSink => summon[Storage[F, HlsSink]].save(sink)
   }
+
+  given Hash[MediaSink] = Hash.by{
+    case rtmpSink: RtmpSink => rtmpSink.hash
+    case hlsSink: HlsSink => hlsSink.hash
+  }
 }
 
 /** Represents rtmp sink in hospital system
@@ -50,10 +58,27 @@ object MediaSink {
 case class RtmpSink(url: String) extends MediaSink {}
 
 object RtmpSink {
-  given Codec[RtmpSink] = deriveCodec[RtmpSink]
+  given encoder: Encoder[RtmpSink] = Encoder.instance { u =>
+    Json.obj(
+      "type" -> "RtmpSink".asJson,
+      "url" -> u.url.asJson,
+    )
+  }
+  given decoder: Decoder[RtmpSink] = Decoder.instance { cursor =>
+    for {
+      _ <- cursor.downField("type").as[String].flatMap {
+        case "RtmpSink" => Right(())
+        case other        => Left(DecodingFailure(s"Unexpected type: $other", cursor.history))
+      }
+      url <- cursor.downField("url").as[String]
+    } yield RtmpSink(url)
+  }
+  given Codec[RtmpSink] = Codec.from(decoder, encoder)
 
   given [F[_]]: Storage[F, MediaSink] =
     throw new UnsupportedOperationException("Rtmp stream can not be saved to any storage")
+
+  given Hash[RtmpSink] = Hash.by(rtmpSink => ("RtmpSink", rtmpSink.url))
 }
 
 type SinkName = String
@@ -66,7 +91,22 @@ type SinkName = String
 case class HlsSink(sinkName: SinkName) extends MediaSink {}
 
 object HlsSink {
-  given Codec[HlsSink] = deriveCodec[HlsSink]
+  given encoder: Encoder[HlsSink] = Encoder.instance { u =>
+    Json.obj(
+      "type" -> "HlsSink".asJson,
+      "sinkName" -> u.sinkName.asJson,
+    )
+  }
+  given decoder: Decoder[HlsSink] = Decoder.instance { cursor =>
+    for {
+      _ <- cursor.downField("type").as[String].flatMap {
+        case "HlsSink" => Right(())
+        case other        => Left(DecodingFailure(s"Unexpected type: $other", cursor.history))
+      }
+      url <- cursor.downField("sinkName").as[String]
+    } yield HlsSink(url)
+  }
+  given Codec[HlsSink] = Codec.from(decoder, encoder)
 
   given [F[_]: Sync](using sinkName: Name[HlsSink]): FolderName[F, HlsSink] =
     hlsSink => {
@@ -118,4 +158,6 @@ object HlsSink {
           )
       } yield ()
   }
+
+  given Hash[HlsSink] = Hash.by(hlsSink => ("HlsSink", hlsSink.sinkName))
 }

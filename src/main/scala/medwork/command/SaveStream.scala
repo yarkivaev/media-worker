@@ -10,36 +10,23 @@ import medwork.{MediaSink, MediaSource, MediaStream}
 import io.circe.*
 import io.circe.syntax.*
 
-case class SaveStream(source: MediaSource, mediaSink: MediaSink) extends MediaWorkerCommand {
+case class SaveStream(source: MediaSource, sink: MediaSink) extends MediaWorkerCommand {
   self =>
 
   override def toJson: Json = self.asJson
-
-  override def act[F[_]: Async: StreamingBackend: ActiveMediaStreams](using
-    Storage[F, MediaSink],
-    MonadCancel[F, Throwable]
-  ): F[Unit] =
-    summon[ActiveMediaStreams[F]].manageMediaStream(
-      MediaStream(source, mediaSink),
-      Spawn[F]
-        .both(
-          summon[StreamingBackend[F]].stream(source, mediaSink),
-          summon[Storage[F, MediaSink]].save(mediaSink)
-        )
-        .map(_ => ())
-    )
 }
 
 object SaveStream {
   given Encoder[SaveStream] = (rv: SaveStream) =>
     Json.obj(
+      "type" -> "SaveStream".asJson,
       "source" -> rv.source.asJson,
-      "mediaSink" -> rv.mediaSink.asJson
+      "sink" -> rv.sink.asJson
     )
 
   given Decoder[SaveStream] = (c: HCursor) =>
     for {
       source <- c.downField("source").as[MediaSource]
-      hlsSink <- c.downField("mediaSink").as[MediaSink]
+      hlsSink <- c.downField("sink").as[MediaSink]
     } yield SaveStream(source, hlsSink)
 }

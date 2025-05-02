@@ -23,10 +23,14 @@ lazy val root = (project in file("."))
       "io.minio" % "minio" % "8.3.4",
       "io.projectreactor" % "reactor-core" % "3.7.3", // Why do I need reactor?
       "com.github.pureconfig" %% "pureconfig-core" % "0.17.8",
+      "io.github.kirill5k" %% "mongo4cats-core" % "0.7.12",
+      "io.github.kirill5k" %% "mongo4cats-circe" % "0.7.12",
+      "io.github.kirill5k" %% "mongo4cats-embedded" % "0.7.12",
       "org.scalatest" %% "scalatest" % "3.2.19" % Test,
       "org.typelevel" %% "cats-effect" % "3.5.7" % Test,
       "org.scalatestplus" %% "mockito-5-10" % "3.2.18.0" % Test,
       "org.testcontainers" % "rabbitmq" % "1.20.5" % Test,
+      "org.testcontainers" % "mongodb" % "1.20.5" % Test,
       "org.testcontainers" % "testcontainers" % "1.20.5" % Test,
       "org.junit.jupiter" % "junit-jupiter" % "5.8.1" % Test
     ),

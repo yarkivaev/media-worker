@@ -3,6 +3,9 @@ package medwork.command
 import cats.effect.Async
 import cats.effect.kernel.MonadCancel
 import cats.implicits.*
+import cats.syntax.*
+import medwork.MediaStream
+import medwork.MediaSource
 import medwork.MediaSink
 import medwork.server.ActiveMediaStreams
 import medwork.server.persistence.Storage
@@ -12,36 +15,43 @@ import io.circe.parser.*
 import io.circe.syntax.*
 import lepus.client.{Message, MessageDecoder, MessageEncoder, MessageRaw}
 import lepus.std.ChannelCodec
+import cats.Monad
 
 /** Command for media worker to execute some action
   */
 trait MediaWorkerCommand {
+  self =>
+
+  val source: MediaSource
+
+  val sink: MediaSink
 
   def toJson: Json
 
-  /** executes command action
-    * @tparam F
-    *   Effect
-    * @return
-    *   Effect that process command action
-    */
-  def act[F[_]: Async: StreamingBackend: ActiveMediaStreams](using
-    Storage[F, MediaSink],
-    MonadCancel[F, Throwable]
-  ): F[Unit]
+  def execute[F[_]: ActiveMediaStreams:  Monad]: F[Unit] = {
+    summon[ActiveMediaStreams[F]].manageMediaStream(
+      MediaStream(source, sink)
+    ).map(_ => ())
+  }
 }
 
 object MediaWorkerCommand {
   given Encoder[MediaWorkerCommand] = Encoder.instance(_.toJson)
 
   given (using
-    decoders: List[Decoder[_ <: MediaWorkerCommand]]
-  ): Decoder[MediaWorkerCommand] =
-    decoders.map(_.widen).reduceLeft(_ or _)
+    decoders: Map[String, Decoder[_ <: MediaWorkerCommand]]
+  ): Decoder[MediaWorkerCommand] = Decoder.instance { cursor =>
+    cursor.get[String]("type").flatMap { typeName =>
+      decoders.get(typeName) match {
+        case Some(decoder) => decoder.tryDecode(cursor)
+        case None => Left(DecodingFailure(s"Unknown MediaWorkerCommand type: $typeName", cursor.history))
+      }
+    }
+  }
 
-  given List[Decoder[_ <: MediaWorkerCommand]] = List(
-    summon[Decoder[RedirectStream]],
-    summon[Decoder[SaveStream]]
+  given Map[String, Decoder[_ <: MediaWorkerCommand]] = Map(
+    "RedirectStream" -> summon[Decoder[RedirectStream]],
+    "SaveStream" -> summon[Decoder[SaveStream]]
   )
 
   given (using encoder: Encoder[MediaWorkerCommand], decoder: Decoder[MediaWorkerCommand]): Codec[MediaWorkerCommand] =
