@@ -23,7 +23,7 @@ object MediaWorker {
   )(using Storage[F, MediaSink]): F[Unit] = {
     (for {
       message <- messageSource
-      commandEffect = Stream.eval(message.content.act)
+      commandEffect = Stream.eval(message.content.execute)
     } yield commandEffect).parJoinUnbounded.compile.drain
   }
 }

@@ -19,14 +19,15 @@ import io.minio.MinioClient
 import scala.collection.mutable
 import cats.Applicative
 import javax.print.attribute.standard.Media
+import mongo4cats.client.MongoClient
 
 /** Pak media worker service entrypoint.
   */
 object Server extends IOApp {
 
-  def run(args: List[String]) = run(args)(List())
+  def run(args: List[String]) = run(args)(Map())
 
-  def run(args: List[String])(extraDecoders: List[Decoder[_ <: MediaWorkerCommand]]): IO[ExitCode] = {
+  def run(args: List[String])(extraDecoders: Map[String, Decoder[_ <: MediaWorkerCommand]]): IO[ExitCode] = {
 
     given Name[HlsSink] = hlsSink => hlsSink.sinkName
 
@@ -38,12 +39,11 @@ object Server extends IOApp {
 
     import medwork.server.persistence.aws.given
 
-    given ActiveMediaStreams[IO] = ActiveMediaStreams.inMemory[IO]
-
-    given List[Decoder[_ <: MediaWorkerCommand]] = MediaWorkerCommand.given_List_Decoder ++ extraDecoders
+    given Map[String, Decoder[_ <: MediaWorkerCommand]] = MediaWorkerCommand.given_Map_String_Decoder ++ extraDecoders
 
     (for {
       serverConfig <- Resource.eval(ServerConfig.load(ConfigSource.default))
+      mongoClient <- MongoClient.fromConnectionString[IO]("mongodb://localhost:27017")
       given MinioClient = MinioClient
         .builder()
         .endpoint(serverConfig.s3.endpointUrl)
@@ -65,6 +65,7 @@ object Server extends IOApp {
             })
         )
       }
+      given ActiveMediaStreams[IO] = ActiveMediaStreams.inMemory[IO]
       lepusClient <- LepusClient[IO](
         host = Host.fromString(serverConfig.queue.host).get,
         port = Port.fromInt(serverConfig.queue.port.toInt).get

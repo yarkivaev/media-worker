@@ -12,32 +12,24 @@ import io.circe.syntax.*
 
 case class RedirectStream(
   source: MediaSource,
-  middleware: MediaSink
+  sink: MediaSink
 ) extends MediaWorkerCommand {
   self =>
 
   override def toJson: Json = self.asJson
-
-  override def act[F[_]: Async: StreamingBackend: ActiveMediaStreams](using
-    Storage[F, MediaSink],
-    MonadCancel[F, Throwable]
-  ): F[Unit] =
-    summon[ActiveMediaStreams[F]].manageMediaStream(
-      MediaStream(source, middleware),
-      summon[StreamingBackend[F]].stream(source, middleware)
-    )
 }
 
 object RedirectStream {
   given Encoder[RedirectStream] = (rv: RedirectStream) =>
     Json.obj(
+      "type" -> "RedirectStream".asJson,
       "source" -> rv.source.asJson,
-      "middleware" -> rv.middleware.asJson
+      "sink" -> rv.sink.asJson
     )
 
   given Decoder[RedirectStream] = (c: HCursor) =>
     for {
       source <- c.downField("source").as[MediaSource]
-      middleware <- c.downField("middleware").as[MediaSink]
+      middleware <- c.downField("sink").as[MediaSink]
     } yield RedirectStream(source, middleware)
 }
