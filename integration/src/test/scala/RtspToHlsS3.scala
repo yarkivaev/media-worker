@@ -5,7 +5,7 @@ import com.dimafeng.testcontainers.scalatest.TestContainersForAll
 import com.dimafeng.testcontainers.{GenericContainer, RabbitMQContainer, MinIOContainer}
 import com.github.kokorin.jaffree.ffprobe.FFprobe
 import medwork.client.Client
-import medwork.command.SaveStream
+import medwork.command.StartMediaStream
 import medwork.{RtmpSink, RtspSource}
 import org.scalatest.flatspec
 import org.testcontainers.containers.Network
@@ -44,7 +44,7 @@ class RtspToHlsS3 extends flatspec.AnyFlatSpec with TestContainersForAll {
             }
           for {
             _ <- client.executeCommand(
-              SaveStream(
+              StartMediaStream(
                 RtspSource(
                   f"rtsp://${relatedContainers.rtspServer.networkAliases.head}:8554/test"
                 ),

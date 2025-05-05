@@ -4,7 +4,7 @@ import cats.effect.*
 import cats.effect.std.Queue
 import cats.effect.unsafe.implicits.global
 import medwork.*
-import medwork.command.{MediaWorkerCommand, RedirectStream}
+import medwork.command.{MediaWorkerCommand, StartMediaStream, StopMediaStream}
 import medwork.server.streaming.StreamingBackendImpl
 import fs2.*
 import org.scalatest.*
@@ -37,11 +37,11 @@ class MediaWorkerSpec extends flatspec.AnyFlatSpec with matchers.should.Matchers
       .start(
         MediaWorker[IO](
           Stream(
-            RedirectStream(
+            StartMediaStream(
               RtmpSource("url"),
               RtmpSink("url")
             ),
-            RedirectStream(
+            StopMediaStream(
               RtmpSource("url"),
               RtmpSink("url")
             )

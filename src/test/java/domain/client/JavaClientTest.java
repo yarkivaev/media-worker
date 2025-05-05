@@ -2,7 +2,7 @@ package medwork.client;
 
 import medwork.HlsSink;
 import medwork.RtmpSource;
-import medwork.command.SaveStream;
+import medwork.command.StartMediaStream;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
@@ -30,7 +30,7 @@ public class JavaClientTest {
 
 
         client.executeCommand(
-                new SaveStream(
+                new StartMediaStream(
                         new RtmpSource("rtmpSource"),
                         new HlsSink("recordThis")
                 )

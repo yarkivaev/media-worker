@@ -41,7 +41,7 @@ object MediaWorkerCommand {
   given (using
     decoders: Map[String, Decoder[_ <: MediaWorkerCommand]]
   ): Decoder[MediaWorkerCommand] = Decoder.instance { cursor =>
-    cursor.get[String]("type").flatMap { typeName =>
+    cursor.get[String]("command").flatMap { typeName =>
       decoders.get(typeName) match {
         case Some(decoder) => decoder.tryDecode(cursor)
         case None => Left(DecodingFailure(s"Unknown MediaWorkerCommand type: $typeName", cursor.history))
@@ -50,8 +50,8 @@ object MediaWorkerCommand {
   }
 
   given Map[String, Decoder[_ <: MediaWorkerCommand]] = Map(
-    "RedirectStream" -> summon[Decoder[RedirectStream]],
-    "SaveStream" -> summon[Decoder[SaveStream]]
+    "StartMediaStream" -> summon[Decoder[StartMediaStream]],
+    "StopMediaStream" -> summon[Decoder[StopMediaStream]]
   )
 
   given (using encoder: Encoder[MediaWorkerCommand], decoder: Decoder[MediaWorkerCommand]): Codec[MediaWorkerCommand] =

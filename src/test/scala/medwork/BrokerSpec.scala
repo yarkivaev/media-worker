@@ -4,7 +4,7 @@ import cats.effect.*
 import cats.effect.unsafe.implicits.global
 import cats.implicits.*
 import com.comcast.ip4s.Port
-import medwork.command.{MediaWorkerCommand, SaveStream, RedirectStream}
+import medwork.command.{MediaWorkerCommand, StopMediaStream, StartMediaStream}
 import fs2.{Pure, Stream}
 import lepus.client.*
 import lepus.protocol.domains.{ExchangeName, QueueName, ShortString}
@@ -31,15 +31,15 @@ class BrokerSpec extends flatspec.AnyFlatSpec with MockitoSugar with BeforeAndAf
 
   "mediaSink" should "be able to put new MediaWorkerCommands" in {
     val stream: Stream[IO, MediaWorkerCommand] = Stream(
-      RedirectStream(
+      StartMediaStream(
         RtmpSource("url"),
         RtmpSink("url")
       ),
-      SaveStream(
+      StopMediaStream(
         RtmpSource("url"),
         HlsSink("140")
       ),
-      RedirectStream(
+      StartMediaStream(
         RtmpSource("url"),
         RtmpSink("url")
       )
@@ -55,15 +55,15 @@ class BrokerSpec extends flatspec.AnyFlatSpec with MockitoSugar with BeforeAndAf
 
   it should "be able to transfer MediaWorkerCommand" in {
     val stream: Stream[Pure, MediaWorkerCommand] = Stream(
-      RedirectStream(
+      StartMediaStream(
         RtmpSource("url"),
         RtmpSink("url")
       ),
-      SaveStream(
+      StopMediaStream(
         RtmpSource("url"),
         HlsSink("140")
       ),
-      RedirectStream(
+      StartMediaStream(
         RtmpSource("url"),
         RtmpSink("url")
       )

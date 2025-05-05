@@ -15,10 +15,10 @@ import scala.concurrent.duration.*
 
 class MediaStreamSpec extends flatspec.AnyFlatSpec with matchers.should.Matchers {
 
-  "Decoder" should "decode SaveStream" in {
+  "Decoder" should "decode StartMediaStream" in {
     import medwork.command.MediaWorkerCommand
 
-    val command: MediaWorkerCommand = SaveStream(
+    val command: MediaWorkerCommand = StartMediaStream(
             RtmpSource("url"),
             HlsSink("140")
         )
@@ -28,10 +28,10 @@ class MediaStreamSpec extends flatspec.AnyFlatSpec with matchers.should.Matchers
     assert(Decoder[MediaWorkerCommand].decodeJson(raw).right.get == command)
   }
 
-  "Decoder" should "decode RedirectStream" in {
+  "Decoder" should "decode StopMediaStream" in {
     import medwork.command.MediaWorkerCommand
 
-    val command: MediaWorkerCommand = RedirectStream(
+    val command: MediaWorkerCommand = StopMediaStream(
             RtmpSource("url"),
             HlsSink("140")
         )
