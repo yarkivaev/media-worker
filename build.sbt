@@ -6,6 +6,16 @@ ThisBuild / scalaVersion := "3.3.5"
 
 enablePlugins(DockerPlugin)
 
+inThisBuild(
+   List(
+     scalaVersion := "3.3.5", // 2.13.16, 3.3.5 or 3.6.4
+     organization := "hirus",
+     name := "pak-media-worker",
+     version := "0.1.0-SNAPSHOT",
+     semanticdbEnabled := true,
+   )
+ )
+
 lazy val root = (project in file("."))
   .settings(
     name := (ThisBuild / name).value,
@@ -34,7 +44,10 @@ lazy val root = (project in file("."))
       "org.testcontainers" % "testcontainers" % "1.20.5" % Test,
       "org.junit.jupiter" % "junit-jupiter" % "5.8.1" % Test
     ),
-    scalacOptions += "-Ykind-projector",
+    scalacOptions ++= Seq(
+      "-Ykind-projector",
+      "-Wunused:imports"
+    ),
     docker / dockerfile := {
       val jarFile: File = (Compile / packageBin / sbt.Keys.`package`).value
       val classpath = (Compile / managedClasspath).value
@@ -63,7 +76,22 @@ lazy val root = (project in file("."))
       ("Nexus Repository" at "http://212.67.12.16:8081/repository/maven-snapshots/").withAllowInsecureProtocol(true)
     ),
     credentials += Credentials("Sonatype Nexus Repository Manager", "212.67.12.16", "pak-service", "uFc7Fy6bCXQQ"),
-    publishMavenStyle := true
+    publishMavenStyle := true,
+    wartremoverErrors ++= Warts.allBut(
+      Wart.Overloading, 
+      Wart.Nothing, 
+      Wart.MutableDataStructures,
+      Wart.IterableOps,
+      Wart.Throw,
+      Wart.EitherProjectionPartial,
+      Wart.PlatformDefault,
+      Wart.Recursion,
+      Wart.Var,
+      Wart.AsInstanceOf,
+      Wart.Null,
+      Wart.OptionPartial,
+      Wart.AutoUnboxing
+      )
   )
 
 lazy val buildDockerBeforeTests = taskKey[Unit]("Build Docker image before running tests in integration module")

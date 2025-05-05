@@ -1,18 +1,22 @@
 package medwork
 
-import cats.effect.*
+import cats.effect._
 import cats.effect.unsafe.implicits.global
-import cats.implicits.*
+import cats.implicits._
 import com.comcast.ip4s.Port
-import medwork.command.{MediaWorkerCommand, StopMediaStream, StartMediaStream}
-import fs2.{Pure, Stream}
-import lepus.client.*
-import lepus.protocol.domains.{ExchangeName, QueueName, ShortString}
+import fs2.Pure
+import fs2.Stream
+import lepus.client._
+import lepus.protocol.domains.ExchangeName
+import lepus.protocol.domains.QueueName
+import lepus.protocol.domains.ShortString
 import lepus.std.ChannelCodec
-import org.scalatest.*
+import medwork.command.MediaWorkerCommand
+import medwork.command.StartMediaStream
+import medwork.command.StopMediaStream
+import org.scalatest._
 import org.scalatestplus.mockito.MockitoSugar
 import org.testcontainers.containers.RabbitMQContainer
-import cats.effect.unsafe.implicits.global
 
 class BrokerSpec extends flatspec.AnyFlatSpec with MockitoSugar with BeforeAndAfterAll {
 
@@ -93,6 +97,6 @@ class BrokerSpec extends flatspec.AnyFlatSpec with MockitoSugar with BeforeAndAf
 
     val streamedData = publish.zipRight(subscribe).take(3).compile.toList.unsafeRunSync()
 
-    assert(streamedData == stream.toList)
+    assert(streamedData === stream.toList)
   }
 }

@@ -1,12 +1,12 @@
 package medwork.server
 
 import cats.effect.kernel.Async
+import fs2._
 import medwork.BrokerMessage
-import medwork.command.MediaWorkerCommand
-import medwork.server.streaming.StreamingBackend
-import fs2.*
 import medwork.MediaSink
+import medwork.command.MediaWorkerCommand
 import medwork.server.persistence.Storage
+import medwork.server.streaming.StreamingBackend
 
 object MediaWorker {
 

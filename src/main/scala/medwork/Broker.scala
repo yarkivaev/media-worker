@@ -1,14 +1,17 @@
 package medwork
 
+import cats.Functor
+import cats.Monad
+import cats.effect.Concurrent
+import cats.effect.Resource
 import cats.effect.kernel.MonadCancel
-import cats.effect.{Concurrent, Resource}
-import cats.implicits.*
-import cats.{Functor, Monad}
-import fs2.{Pipe, Stream}
+import cats.implicits._
+import fs2.Pipe
+import fs2.Stream
 import io.circe.Decoder
 import io.circe.parser.decode
-import lepus.client.*
-import lepus.protocol.domains.*
+import lepus.client._
+import lepus.protocol.domains._
 
 /** Represents message, obtained from broker queue. Provides ability to acknowledge message or reject it.
   * @tparam F

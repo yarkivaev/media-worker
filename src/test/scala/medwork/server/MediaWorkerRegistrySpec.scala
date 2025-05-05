@@ -1,11 +1,12 @@
 package medwork.server
 
-import cats.effect.*
-import cats.effect.std.{Queue, Random}
+import cats.effect._
+import cats.effect.std.Queue
+import cats.effect.std.Random
 import cats.effect.unsafe.implicits.global
-import org.mockito.ArgumentMatchers.*
-import org.mockito.Mockito.*
-import org.scalatest.*
+import org.mockito.ArgumentMatchers._
+import org.mockito.Mockito._
+import org.scalatest._
 import org.scalatestplus.mockito.MockitoSugar
 
 import scala.collection.mutable

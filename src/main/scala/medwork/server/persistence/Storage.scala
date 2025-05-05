@@ -1,8 +1,6 @@
 package medwork.server.persistence
 
-import cats.effect.{IO, Sync}
-
-import java.io.File
+import cats.effect.IO
 
 /** Represents external file storage
   * @tparam F

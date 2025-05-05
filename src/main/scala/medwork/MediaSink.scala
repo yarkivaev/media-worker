@@ -1,20 +1,22 @@
 package medwork
-
-import cats.effect.kernel.Clock
-import cats.effect.kernel.Async
-import cats.effect.{Spawn, Sync}
-import cats.implicits.*
-import medwork.server.persistence.{FolderName, Storage}
-import io.circe.generic.semiauto.*
-import io.circe.syntax.*
-import io.circe.{Codec, Decoder, Encoder}
-import os.*
-import cats.kernel.Hash
-import io.circe.Json
-import io.circe.DecodingFailure
-
-import scala.concurrent.duration.*
 import cats.MonadError
+import cats.effect.Spawn
+import cats.effect.Sync
+import cats.effect.kernel.Async
+import cats.implicits._
+import cats.kernel.Hash
+import io.circe.Codec
+import io.circe.Decoder
+import io.circe.DecodingFailure
+import io.circe.Encoder
+import io.circe.Json
+import io.circe.generic.semiauto._
+import io.circe.syntax._
+import medwork.server.persistence.FolderName
+import medwork.server.persistence.Storage
+import os._
+
+import scala.concurrent.duration._
 
 /** Represents sink of a media flow in a hospital system.
   */
@@ -44,9 +46,9 @@ object MediaSink {
     case sink: HlsSink => summon[Storage[F, HlsSink]].save(sink)
   }
 
-  given Hash[MediaSink] = Hash.by{
+  given Hash[MediaSink] = Hash.by {
     case rtmpSink: RtmpSink => rtmpSink.hash
-    case hlsSink: HlsSink => hlsSink.hash
+    case hlsSink: HlsSink   => hlsSink.hash
   }
 }
 
@@ -55,20 +57,20 @@ object MediaSink {
   * @param url
   *   rtmp url address
   */
-case class RtmpSink(url: String) extends MediaSink {}
+final case class RtmpSink(url: String) extends MediaSink {}
 
 object RtmpSink {
   given encoder: Encoder[RtmpSink] = Encoder.instance { u =>
     Json.obj(
       "type" -> "RtmpSink".asJson,
-      "url" -> u.url.asJson,
+      "url" -> u.url.asJson
     )
   }
   given decoder: Decoder[RtmpSink] = Decoder.instance { cursor =>
     for {
       _ <- cursor.downField("type").as[String].flatMap {
         case "RtmpSink" => Right(())
-        case other        => Left(DecodingFailure(s"Unexpected type: $other", cursor.history))
+        case other      => Left(DecodingFailure(s"Unexpected type: $other", cursor.history))
       }
       url <- cursor.downField("url").as[String]
     } yield RtmpSink(url)
@@ -88,20 +90,20 @@ type SinkName = String
   * @param sinkName
   *   name of the sink
   */
-case class HlsSink(sinkName: SinkName) extends MediaSink {}
+final case class HlsSink(sinkName: SinkName) extends MediaSink {}
 
 object HlsSink {
   given encoder: Encoder[HlsSink] = Encoder.instance { u =>
     Json.obj(
       "type" -> "HlsSink".asJson,
-      "sinkName" -> u.sinkName.asJson,
+      "sinkName" -> u.sinkName.asJson
     )
   }
   given decoder: Decoder[HlsSink] = Decoder.instance { cursor =>
     for {
       _ <- cursor.downField("type").as[String].flatMap {
         case "HlsSink" => Right(())
-        case other        => Left(DecodingFailure(s"Unexpected type: $other", cursor.history))
+        case other     => Left(DecodingFailure(s"Unexpected type: $other", cursor.history))
       }
       url <- cursor.downField("sinkName").as[String]
     } yield HlsSink(url)

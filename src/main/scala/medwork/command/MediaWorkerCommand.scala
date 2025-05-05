@@ -1,21 +1,18 @@
 package medwork.command
-
-import cats.effect.Async
-import cats.effect.kernel.MonadCancel
-import cats.implicits.*
-import cats.syntax.*
-import medwork.MediaStream
-import medwork.MediaSource
-import medwork.MediaSink
-import medwork.server.ActiveMediaStreams
-import medwork.server.persistence.Storage
-import medwork.server.streaming.StreamingBackend
-import io.circe.*
-import io.circe.parser.*
-import io.circe.syntax.*
-import lepus.client.{Message, MessageDecoder, MessageEncoder, MessageRaw}
-import lepus.std.ChannelCodec
 import cats.Monad
+import cats.implicits._
+import io.circe._
+import io.circe.parser._
+import io.circe.syntax._
+import lepus.client.Message
+import lepus.client.MessageDecoder
+import lepus.client.MessageEncoder
+import lepus.client.MessageRaw
+import lepus.std.ChannelCodec
+import medwork.MediaSink
+import medwork.MediaSource
+import medwork.MediaStream
+import medwork.server.ActiveMediaStreams
 
 /** Command for media worker to execute some action
   */
@@ -28,10 +25,12 @@ trait MediaWorkerCommand {
 
   def toJson: Json
 
-  def execute[F[_]: ActiveMediaStreams:  Monad]: F[Unit] = {
-    summon[ActiveMediaStreams[F]].manageMediaStream(
-      MediaStream(source, sink)
-    ).map(_ => ())
+  def execute[F[_]: ActiveMediaStreams: Monad]: F[Unit] = {
+    summon[ActiveMediaStreams[F]]
+      .manageMediaStream(
+        MediaStream(source, sink)
+      )
+      .map(_ => ())
   }
 }
 
@@ -44,7 +43,7 @@ object MediaWorkerCommand {
     cursor.get[String]("command").flatMap { typeName =>
       decoders.get(typeName) match {
         case Some(decoder) => decoder.tryDecode(cursor)
-        case None => Left(DecodingFailure(s"Unknown MediaWorkerCommand type: $typeName", cursor.history))
+        case None          => Left(DecodingFailure(s"Unknown MediaWorkerCommand type: $typeName", cursor.history))
       }
     }
   }

@@ -1,12 +1,16 @@
 package medwork.client
 
-import cats.effect.{IO, Resource}
+import cats.effect.IO
+import cats.effect.Resource
 import com.comcast.ip4s.Port
+import fs2.Pipe
+import fs2.Stream
+import lepus.client.LepusClient
+import lepus.client.ReturnedMessageRaw
+import lepus.protocol.domains.QueueName
+import lepus.protocol.domains.ShortString
 import medwork.Broker
 import medwork.command.MediaWorkerCommand
-import fs2.{Pipe, Stream}
-import lepus.client.{Envelope, LepusClient, Message, ReturnedMessage, ReturnedMessageRaw}
-import lepus.protocol.domains.{ExchangeName, QueueName, ShortString}
 
 /** Effectful client.
   * @tparam F
@@ -24,23 +28,16 @@ object Client {
 
   def apply(queuePort: Int): Resource[IO, Client[IO]] = {
     for {
-      lepusClient <- LepusClient[IO](port = Port.fromInt(queuePort).get)
+      brokerPort <- Resource.eval(
+        IO.fromEither(
+          Port.fromInt(queuePort).toRight(new NoSuchElementException("No value in option"))
+        )
+      )
+      lepusClient <- LepusClient[IO](port = brokerPort)
       messageSink <- Broker.messageSink[IO, MediaWorkerCommand](
         lepusClient,
         QueueName("mediaworkercommand")
       )
     } yield Client(messageSink)
   }
-
-  def printSink: Pipe[IO, Envelope[MediaWorkerCommand], ReturnedMessageRaw] = stream =>
-    stream.map(_ => {
-      println("log")
-      ReturnedMessage(
-        null,
-        ShortString("hello"),
-        ExchangeName("hello"),
-        ShortString("null"),
-        null
-      )
-    })
 }

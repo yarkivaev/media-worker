@@ -1,9 +1,12 @@
 package medwork.server.streaming
+import cats.effect.Sync
+import cats.effect.kernel.MonadCancel
+import cats.effect.kernel.Resource
 
-import cats.effect.kernel.{MonadCancel, Resource}
-import cats.effect.{IO, Sync}
-
-import scala.sys.process.{Process, ProcessBuilder, ProcessIO, ProcessLogger}
+import scala.sys.process.Process
+import scala.sys.process.ProcessBuilder
+import scala.sys.process.ProcessIO
+import scala.sys.process.ProcessLogger
 
 /** Resource process wrapper
   * @tparam F
@@ -37,28 +40,4 @@ object RunProcess {
 
     override def run(processBuilder: ProcessBuilder, log: ProcessLogger, connectInput: Boolean): Resource[F, Process] =
       Resource.make(Sync[F].delay(processBuilder.run(log, connectInput)))(process => Sync[F].delay(process.destroy()))
-
-  def fake: RunProcess[IO] = new RunProcess[IO] {
-    private val fakeProcess: Process = new Process:
-      override def isAlive(): Boolean = true
-
-      override def exitValue(): Int = 0
-
-      override def destroy(): Unit = ()
-
-    override def run(processBuilder: ProcessBuilder): Resource[IO, Process] =
-      Resource.eval(IO.println(processBuilder.toString)).map(_ => fakeProcess)
-
-    override def run(processBuilder: ProcessBuilder, log: ProcessLogger): Resource[IO, Process] =
-      Resource.eval(IO.println(processBuilder.toString)).map(_ => fakeProcess)
-
-    override def run(processBuilder: ProcessBuilder, io: ProcessIO): Resource[IO, Process] =
-      Resource.eval(IO.println(processBuilder.toString)).map(_ => fakeProcess)
-
-    override def run(processBuilder: ProcessBuilder, connectInput: Boolean): Resource[IO, Process] =
-      Resource.eval(IO.println(processBuilder.toString)).map(_ => fakeProcess)
-
-    override def run(processBuilder: ProcessBuilder, log: ProcessLogger, connectInput: Boolean): Resource[IO, Process] =
-      Resource.eval(IO.println(processBuilder.toString)).map(_ => fakeProcess)
-  }
 }

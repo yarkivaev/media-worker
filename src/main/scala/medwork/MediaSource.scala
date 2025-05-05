@@ -1,14 +1,14 @@
 package medwork
 
-import cats.implicits.*
-import io.circe.generic.semiauto.*
-import io.circe.syntax.*
-import io.circe.{Codec, Decoder, Encoder}
-import cats.kernel.Hash
+import cats.implicits._
 import cats.instances.HashInstances._
-import cats.syntax._
-import io.circe.Json
+import cats.kernel.Hash
+import io.circe.Codec
+import io.circe.Decoder
 import io.circe.DecodingFailure
+import io.circe.Encoder
+import io.circe.Json
+import io.circe.syntax._
 
 /** Represents source of a media flow in a hospital system.
   */
@@ -27,7 +27,7 @@ object MediaSource {
       case rtsp: RtspSource => rtsp.asJson
     }
 
-  given Hash[MediaSource] = Hash.by{
+  given Hash[MediaSource] = Hash.by {
     case rtmpSource: RtmpSource => rtmpSource.hash
     case rtspSource: RtspSource => rtspSource.hash
   }
@@ -38,13 +38,13 @@ object MediaSource {
   * @param url
   *   rtmp url address
   */
-case class RtmpSource(url: String) extends MediaSource
+final case class RtmpSource(url: String) extends MediaSource
 
 object RtmpSource {
   given encoder: Encoder[RtmpSource] = Encoder.instance { u =>
     Json.obj(
       "type" -> "RtmpSource".asJson,
-      "url" -> u.url.asJson,
+      "url" -> u.url.asJson
     )
   }
   given decoder: Decoder[RtmpSource] = Decoder.instance { cursor =>
@@ -66,13 +66,13 @@ object RtmpSource {
   * @param url
   *   rtsp url address
   */
-case class RtspSource(url: String) extends MediaSource
+final case class RtspSource(url: String) extends MediaSource
 
 object RtspSource {
   given encoder: Encoder[RtspSource] = Encoder.instance { u =>
     Json.obj(
       "type" -> "RtspSource".asJson,
-      "url" -> u.url.asJson,
+      "url" -> u.url.asJson
     )
   }
   given decoder: Decoder[RtspSource] = Decoder.instance { cursor =>

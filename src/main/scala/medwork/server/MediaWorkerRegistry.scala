@@ -1,6 +1,6 @@
 package medwork.server
 
-import cats.syntax.all.*
+import cats.syntax.all._
 
 type MediaWorkerId = Int
 

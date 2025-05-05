@@ -1,12 +1,15 @@
 package medwork
 
+import cats.effect.Async
+import cats.effect.IO
 import cats.effect.unsafe.implicits.global
-import cats.effect.{Async, IO}
-import medwork.server.persistence.{FolderName, Storage}
-import org.scalatest.{flatspec, matchers}
+import medwork.server.persistence.FolderName
+import medwork.server.persistence.Storage
+import org.scalatest.flatspec
+import org.scalatest.matchers
 import os.Path
 
-import scala.concurrent.duration.*
+import scala.concurrent.duration._
 
 class MediaStreamSpec extends flatspec.AnyFlatSpec with matchers.should.Matchers {
 

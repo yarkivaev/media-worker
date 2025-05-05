@@ -1,12 +1,12 @@
 package medwork.server.streaming
 
 import cats.Functor
-import cats.effect.{Async, Sync}
-import cats.implicits.*
-import medwork.{MediaSink, MediaSource}
+import cats.effect.Async
+import cats.implicits._
+import medwork.MediaSink
+import medwork.MediaSource
 
-import scala.sys.process.*
-import cats.Applicative
+import scala.sys.process._
 
 class FFMpegStreamingBackend[F[_]: Async: RunProcess: Functor](using
   sourceStreamingResource: StreamingResource[F, MediaSource],

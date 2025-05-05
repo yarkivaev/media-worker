@@ -1,17 +1,18 @@
 package medwork.server.persistence
 
 import cats.effect.Sync
-import io.minio.{MinioClient, UploadObjectArgs}
-import os.Path
-import scala.util.Try
-import io.minio.BucketExistsArgs
-import io.minio.MakeBucketArgs
 import cats.effect.std.Semaphore
 import cats.implicits._
-import cats.syntax._
+import io.minio.BucketExistsArgs
+import io.minio.MakeBucketArgs
+import io.minio.MinioClient
+import io.minio.UploadObjectArgs
+import os.Path
+
+import scala.util.Try
 
 object aws {
-  given [F[_]: Sync](using bucketSemaphore: String => F[Semaphore[F]], minioClient: MinioClient): Storage[F, Path] =
+  def apply[F[_]: Sync](bucketSemaphore: String => F[Semaphore[F]], minioClient: MinioClient): Storage[F, Path] =
     path =>
       for {
         workDir <- Sync[F].delay(os.pwd)

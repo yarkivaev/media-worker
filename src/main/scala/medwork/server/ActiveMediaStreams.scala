@@ -1,14 +1,11 @@
 package medwork.server
-
-import cats.effect.{Async, Deferred, Spawn, Sync}
-import cats.effect.kernel.MonadCancel
-import cats.implicits.*
-import medwork.MediaStream
-import medwork.MediaSink
-import medwork.server.streaming.StreamingBackend
-import medwork.server.persistence.Storage
-import cats.syntax._
 import cats.effect._
+import cats.effect.kernel.MonadCancel
+import cats.implicits._
+import medwork.MediaSink
+import medwork.MediaStream
+import medwork.server.persistence.Storage
+import medwork.server.streaming.StreamingBackend
 
 import scala.collection.mutable
 
@@ -57,7 +54,7 @@ object ActiveMediaStreams {
     def manageMediaStream(mediaStream: MediaStream): F[Unit] = {
       for {
         d <- Deferred[F, Unit]
-        _ <- Sync[F].delay({storage += (mediaStream -> d)})
+        _ <- Sync[F].delay({ storage += (mediaStream -> d) })
         _ <- Spawn[F].race(
           d.get,
           mediaStream.act

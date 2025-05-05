@@ -1,14 +1,12 @@
 package medwork;
-
-import io.circe.generic.semiauto.*
-import cats.effect.{Async, Spawn}
-import medwork.server.streaming.StreamingBackend
-import medwork.server.persistence.Storage
+import cats.effect.Async
+import cats.effect.Spawn
 import cats.effect.kernel.MonadCancel
 import cats.implicits._
-import cats.kernel.Hash
 import cats.instances.HashInstances._
-import cats.syntax._
+import cats.kernel.Hash
+import medwork.server.persistence.Storage
+import medwork.server.streaming.StreamingBackend
 
 /** Represents media data flow in the hospital system.
   *
@@ -17,7 +15,8 @@ import cats.syntax._
   * @param sink
   *   Sink of the flow.
   */
-case class MediaStream(source: MediaSource, sink: MediaSink) {
+final case class MediaStream(source: MediaSource, sink: MediaSink) {
+
   /** executes command action
     * @tparam F
     *   Effect
@@ -28,7 +27,7 @@ case class MediaStream(source: MediaSource, sink: MediaSink) {
     Storage[F, MediaSink],
     MonadCancel[F, Throwable]
   ): F[Unit] = (source, sink) match {
-    case (source, storableSink: HlsSink) => 
+    case (source, storableSink: HlsSink) =>
       Spawn[F]
         .both(
           summon[StreamingBackend[F]].stream(source, sink),

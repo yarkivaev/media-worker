@@ -2,11 +2,13 @@ package medwork.server.streaming
 
 import cats.Monad
 import cats.effect.Sync
-import cats.effect.kernel.{Async, MonadCancel}
-import cats.syntax.all.*
-import medwork.{MediaSink, MediaSource}
+import cats.effect.kernel.Async
+import cats.effect.kernel.MonadCancel
+import cats.syntax.all._
+import medwork.MediaSink
+import medwork.MediaSource
 
-import scala.concurrent.duration.*
+import scala.concurrent.duration._
 
 /** Represents some resource in hospital system that can be streamed.
   * @tparam A

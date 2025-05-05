@@ -1,6 +1,7 @@
 package medwork.client
 
-import org.scalatest.{BeforeAndAfterAll, flatspec}
+import org.scalatest.BeforeAndAfterAll
+import org.scalatest.flatspec
 import org.scalatestplus.mockito.MockitoSugar
 import org.testcontainers.containers.RabbitMQContainer
 

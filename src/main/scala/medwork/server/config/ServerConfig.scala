@@ -1,9 +1,9 @@
 package medwork.server.config
 
 import cats.effect.IO
-import pureconfig.ConfigSource
-import pureconfig.generic.derivation.default.*
 import pureconfig.ConfigReader
+import pureconfig.ConfigSource
+import pureconfig.generic.derivation.default._
 
 final case class ServerConfig(
   queue: QueueConfig,

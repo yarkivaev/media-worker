@@ -1,11 +1,12 @@
 package medwork.command
 
-import medwork.{MediaSink, MediaSource, MediaStream}
-import io.circe.*
-import io.circe.generic.auto.*
-import io.circe.syntax.*
+import io.circe._
+import io.circe.generic.auto._
+import io.circe.syntax._
+import medwork.MediaSink
+import medwork.MediaSource
 
-case class StartMediaStream(
+final case class StartMediaStream(
   source: MediaSource,
   sink: MediaSink
 ) extends MediaWorkerCommand {
@@ -26,7 +27,7 @@ object StartMediaStream {
     for {
       _ <- c.downField("command").as[String].flatMap {
         case "StartMediaStream" => Right(())
-        case other        => Left(DecodingFailure(s"Unexpected type: $other", c.history))
+        case other              => Left(DecodingFailure(s"Unexpected type: $other", c.history))
       }
       source <- c.downField("source").as[MediaSource]
       middleware <- c.downField("sink").as[MediaSink]

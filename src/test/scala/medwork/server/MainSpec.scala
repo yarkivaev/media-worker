@@ -1,7 +1,8 @@
 package medwork.server
 
 import com.comcast.ip4s.Host
-import org.scalatest.{flatspec, matchers}
+import org.scalatest.flatspec
+import org.scalatest.matchers
 
 class MainSpec extends flatspec.AnyFlatSpec with matchers.should.Matchers {
 

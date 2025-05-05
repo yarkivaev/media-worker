@@ -3,10 +3,11 @@ package medwork.server.streaming
 import cats.effect.IO
 import cats.effect.kernel.Async
 import cats.effect.unsafe.implicits.global
-import org.scalatest.{flatspec, matchers}
+import org.scalatest.flatspec
+import org.scalatest.matchers
 
-import scala.concurrent.duration.*
-import scala.sys.process.*
+import scala.concurrent.duration._
+import scala.sys.process._
 
 class RunProcessSpec extends flatspec.AnyFlatSpec with matchers.should.Matchers {
 

@@ -1,14 +1,16 @@
 package medwork.server
 
-import cats.effect.*
+import cats.effect._
 import cats.effect.std.Queue
 import cats.effect.unsafe.implicits.global
-import medwork.*
-import medwork.command.{MediaWorkerCommand, StartMediaStream, StopMediaStream}
-import medwork.server.streaming.StreamingBackendImpl
-import fs2.*
-import org.scalatest.*
+import fs2._
+import medwork._
+import medwork.command.MediaWorkerCommand
+import medwork.command.StartMediaStream
+import medwork.command.StopMediaStream
 import medwork.server.persistence.Storage
+import medwork.server.streaming.StreamingBackendImpl
+import org.scalatest._
 
 import scala.concurrent.duration.DurationInt
 

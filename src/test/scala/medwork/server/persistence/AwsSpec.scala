@@ -1,10 +1,14 @@
 package medwork.server.persistence
 
-import cats.effect.std.Semaphore
 import cats.effect.IO
+import cats.effect.std.Semaphore
 import cats.effect.unsafe.implicits.global
-import io.minio.{GetObjectArgs, ListObjectsArgs, MakeBucketArgs, MinioClient}
-import org.scalatest.{BeforeAndAfterAll, flatspec, matchers}
+import io.minio.GetObjectArgs
+import io.minio.ListObjectsArgs
+import io.minio.MinioClient
+import org.scalatest.BeforeAndAfterAll
+import org.scalatest.flatspec
+import org.scalatest.matchers
 import org.testcontainers.containers.GenericContainer
 import org.testcontainers.utility.DockerImageName
 import os.Path
@@ -34,8 +38,6 @@ class AwsSpec extends flatspec.AnyFlatSpec with matchers.should.Matchers with Be
       .credentials("minioadmin", "minioadmin")
       .build
 
-    import medwork.server.persistence.aws.given_Storage_F_Path
-
     val bucketName = "hello"
     val content = "HelloWorld"
     val folderPath = os.pwd / bucketName
@@ -49,9 +51,9 @@ class AwsSpec extends flatspec.AnyFlatSpec with matchers.should.Matchers with Be
 
     // minioClient.makeBucket(MakeBucketArgs.builder().bucket(bucketName).build())
 
-    given (String => IO[Semaphore[IO]]) = _ => Semaphore[IO](1)
+    val bucketSem:(String => IO[Semaphore[IO]]) = _ => Semaphore[IO](1)
 
-    val storage = summon[Storage[IO, Path]]
+    val storage = aws(bucketSem, minioClient)
 
     // Use the storage and check for file upload
     val result: Unit = storage.save(dummyPath).unsafeRunSync()
@@ -69,6 +71,6 @@ class AwsSpec extends flatspec.AnyFlatSpec with matchers.should.Matchers with Be
 
     os.remove.all(folderPath)
 
-    assert(source.mkString == content)
+    assert(source.mkString === content)
   }
 }

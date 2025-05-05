@@ -1,10 +1,10 @@
 package medwork.server.streaming
 
-import cats.implicits._
-import cats.effect.kernel.Clock
-import medwork.*
-import medwork.server.persistence.FolderName
 import cats.Applicative
+import cats.effect.kernel.Clock
+import cats.implicits._
+import medwork._
+import medwork.server.persistence.FolderName
 
 object FFMpeg {
   given [F[_]: Applicative]: StreamingResource[F, MediaSource] =

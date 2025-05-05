@@ -1,11 +1,12 @@
 package medwork.command
 
-import medwork.{MediaSink, MediaSource, MediaStream}
-import io.circe.*
-import io.circe.generic.auto.*
-import io.circe.syntax.*
+import io.circe._
+import io.circe.generic.auto._
+import io.circe.syntax._
+import medwork.MediaSink
+import medwork.MediaSource
 
-case class StopMediaStream(source: MediaSource, sink: MediaSink) extends MediaWorkerCommand {
+final case class StopMediaStream(source: MediaSource, sink: MediaSink) extends MediaWorkerCommand {
   self =>
 
   override def toJson: Json = self.asJson
