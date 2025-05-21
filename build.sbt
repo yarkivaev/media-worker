@@ -1,3 +1,7 @@
+import java.net.URL
+import scala.sys.process._
+import xerial.sbt.Sonatype._
+
 ThisBuild / organization := "yarkivaev"
 ThisBuild / name := "media-worker"
 ThisBuild / version := "0.1.0-SNAPSHOT"
@@ -5,6 +9,32 @@ ThisBuild / version := "0.1.0-SNAPSHOT"
 ThisBuild / scalaVersion := "3.3.5"
 
 enablePlugins(DockerPlugin)
+enablePlugins(SonatypePlugin)
+
+// Maven Central publishing settings
+ThisBuild / sonatypeProfileName := "yarkivaev"
+ThisBuild / publishMavenStyle := true
+ThisBuild / sonatypeCredentialHost := "s01.oss.sonatype.org"
+ThisBuild / sonatypeRepository := "https://s01.oss.sonatype.org/service/local"
+ThisBuild / publishTo := sonatypePublishToBundle.value
+
+// POM settings required by Maven Central
+ThisBuild / licenses := Seq("Apache 2.0" -> url("https://www.apache.org/licenses/LICENSE-2.0"))
+ThisBuild / homepage := Some(url("https://github.com/yarkivaev/media-worker"))
+ThisBuild / scmInfo := Some(
+  ScmInfo(
+    url("https://github.com/yarkivaev/media-worker"),
+    "scm:git:git@github.com:yarkivaev/media-worker.git"
+  )
+)
+ThisBuild / developers := List(
+  Developer(
+    "yarkivaev",
+    "Yaroslav Kivaev",
+    "yaroslav@example.com",
+    url("https://github.com/yarkivaev")
+  )
+)
 
 inThisBuild(
    List(
@@ -72,11 +102,11 @@ lazy val root = (project in file("."))
         tag = Some("v" + version.value)
       )
     ),
+    // Local Nexus repository - commented out in favor of Maven Central
     // publishTo := Some(
     //   ("Nexus Repository" at "http://212.67.12.16:8081/repository/maven-snapshots/")
     // ),
     // credentials += Credentials("Sonatype Nexus Repository Manager", "212.67.12.16", "pak-service", "uFc7Fy6bCXQQ"),
-    // publishMavenStyle := true,
     wartremoverErrors ++= Warts.allBut(
       Wart.Overloading, 
       Wart.Nothing, 

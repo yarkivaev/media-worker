@@ -3,6 +3,7 @@ name: Publish to Maven Central
 on:
   push:
     branches: [ "master" ]
+    tags: [ "v*" ]
   pull_request:
     branches: [ "master" ]
 
@@ -36,11 +37,41 @@ jobs:
       - name: Configure SBT credentials
         run: |
           mkdir -p ~/.sbt/1.0
-          echo "credentials += Credentials(\"Sonatype Nexus Repository Manager\", \"s01.oss.sonatype.org\", \"${{ secrets.SONATYPE_USERNAME }}\", \"${{ secrets.SONATYPE_PASSWORD }}\")" > ~/.sbt/1.0/sonatype.sbt
+          cat > ~/.sbt/1.0/sonatype.sbt << EOF
+          credentials += Credentials(
+            "Sonatype Nexus Repository Manager",
+            "s01.oss.sonatype.org",
+            "${{ secrets.SONATYPE_USERNAME }}",
+            "${{ secrets.SONATYPE_PASSWORD }}"
+          )
+          EOF
 
-      - name: Publish to Maven Central
-        env:
-          PGP_PASSPHRASE: ${{ secrets.PGP_PASSPHRASE }}
+      - name: Setup PGP keys
         run: |
-          echo "pgpPassphrase := Some(\"$PGP_PASSPHRASE\".toCharArray)" > ~/.sbt/gpg.sbt
-          sbt clean +publishSigned sonatypeBundleRelease
+          mkdir -p ~/.sbt
+          echo "pgpPassphrase := Some(\"${{ secrets.PGP_PASSPHRASE }}\".toCharArray)" > ~/.sbt/1.0/gpg.sbt
+
+      - name: Run tests
+        run: sbt test
+
+      - name: Set version from tag
+        if: startsWith(github.ref, 'refs/tags/v')
+        run: |
+          TAG=${GITHUB_REF#refs/tags/v}
+          echo "VERSION=$TAG" >> $GITHUB_ENV
+          echo "Setting version to $TAG"
+
+      - name: Update version in build.sbt for tag releases
+        if: startsWith(github.ref, 'refs/tags/v')
+        run: |
+          sed -i "s/version := \".*\"/version := \"$VERSION\"/" build.sbt
+
+      - name: Publish snapshot (on push to master)
+        if: github.event_name == 'push' && github.ref == 'refs/heads/master'
+        run: sbt clean publishSigned
+
+      - name: Publish release (on tag)
+        if: startsWith(github.ref, 'refs/tags/v')
+        run: |
+          sbt clean publishSigned
+          sbt sonatypeBundleRelease
