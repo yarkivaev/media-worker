@@ -73,7 +73,7 @@ lazy val root = (project in file("."))
       )
     ),
     publishTo := Some(
-      ("Nexus Repository" at "http://212.67.12.16:8081/repository/maven-snapshots/").withAllowInsecureProtocol(true)
+      ("Nexus Repository" at "http://212.67.12.16:8081/repository/maven-snapshots/")
     ),
     credentials += Credentials("Sonatype Nexus Repository Manager", "212.67.12.16", "pak-service", "uFc7Fy6bCXQQ"),
     publishMavenStyle := true,
