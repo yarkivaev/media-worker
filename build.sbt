@@ -1,5 +1,5 @@
-ThisBuild / organization := "hirus"
-ThisBuild / name := "pak-media-worker"
+ThisBuild / organization := "yarkivaev"
+ThisBuild / name := "media-worker"
 ThisBuild / version := "0.1.0-SNAPSHOT"
 
 ThisBuild / scalaVersion := "3.3.5"
@@ -9,8 +9,8 @@ enablePlugins(DockerPlugin)
 inThisBuild(
    List(
      scalaVersion := "3.3.5", // 2.13.16, 3.3.5 or 3.6.4
-     organization := "hirus",
-     name := "pak-media-worker",
+     organization := "yarkivaev",
+     name := "media-worker",
      version := "0.1.0-SNAPSHOT",
      semanticdbEnabled := true,
    )
