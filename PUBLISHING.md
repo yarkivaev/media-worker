@@ -56,7 +56,7 @@ credentials += Credentials(
 
 2. **Publish to Sonatype staging**:
    ```
-   sbt publishSigned
+   sbt 'set pgpPassphrase := Some("YOUR_PGP_PASSPHRASE".toCharArray())' publishSigned
    ```
 
 3. **Release to Maven Central**:
@@ -69,7 +69,7 @@ credentials += Credentials(
 For snapshot releases (versions ending in `-SNAPSHOT`):
 
 ```
-sbt publishSigned
+sbt 'set pgpPassphrase := Some("YOUR_PGP_PASSPHRASE".toCharArray())' publishSigned
 ```
 
 Snapshots are automatically published without requiring manual release.
