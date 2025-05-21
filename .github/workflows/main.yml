@@ -21,6 +21,11 @@ jobs:
           java-version: '17'
           cache: 'sbt'
 
+      - name: Setup sbt
+        uses: coursier/setup-action@v1
+        with:
+          apps: sbt
+
       - name: Setup GPG
         run: |
           echo "$PGP_SECRET" | base64 --decode > secret.asc
