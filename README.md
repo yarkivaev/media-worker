@@ -1,20 +1,169 @@
-# Media Worker
+# PAK Media Worker
 
-Service that manages media streams in the system. Internally media streams are ffmpeg, gstreamer processes and whatever 
-has source and sink. Media Worker is supposed to be managed by external user. It receives command from rabbitMQ queue.
+A distributed media streaming service that manages and processes media streams through command-driven architecture. The service handles media transformation tasks via FFmpeg processes and integrates with external storage and messaging systems.
 
-Key entities of the service:
+## Overview
 
-- **MediaStream** - represents media stream in the system. Provide a way to run it.
-- **MediaWorker** - serves as task dispatcher. Obtains tasks from a queue and runs them concurrently.
-- **StreamingBackend** - runs stream processes, maintain their lifecycle. In particular plays role of adapter to ffmpeg
-- **Broker** - provides a way to read messages from rabbitMQ queue and send them there
-- **MediaWorkerCommand** - represents commands to be executed by worker, such as instantiating or stopping a media source
-- **Clients**
-  - **Client** - scala client for media worker
-  - **JavaClient** - java client for media worker
-- **Storage** - give an ability to work with external file storage
+PAK Media Worker is designed as a scalable microservice for media processing workflows. It receives commands through RabbitMQ, processes media streams using FFmpeg, and provides both Scala and Java client libraries for integration.
 
-## Contribution
+### Key Features
 
-We use scalafmt to check code style. Use `scalafmt` to fix code style. Use `sbt scalafmtCheckAll`.
+- **Stream Management**: Start, stop, and monitor media streams
+- **Multiple Backends**: FFmpeg and GStreamer support
+- **Cloud Storage**: S3-compatible storage integration
+- **Message Queue**: RabbitMQ-based command processing
+- **Multi-language Clients**: Scala and Java client libraries
+- **Docker Support**: Containerized deployment ready
+
+## Architecture
+
+The service is built using a modular architecture with the following core components:
+
+### Core Components
+
+- **MediaStream** - Represents a media stream with lifecycle management
+- **MediaWorker** - Command dispatcher that processes tasks from the queue concurrently
+- **StreamingBackend** - Process manager for media streaming tools (FFmpeg adapter)
+- **Broker** - RabbitMQ message handling for commands and responses
+- **MediaWorkerCommand** - Command interface for stream operations (start/stop)
+- **Storage** - External file storage abstraction layer
+
+### Client Libraries
+
+- **Client** - Scala client for media worker integration
+- **JavaClient** - Java client for media worker integration
+
+### Project Structure
+
+```
+pak-media-worker/
+├── domain/          # Core domain models and interfaces
+├── server/          # Main server implementation
+├── client/          # Client libraries (Scala/Java)
+└── integration/     # Integration tests and examples
+```
+
+## Prerequisites
+
+- **Java 17+**
+- **FFmpeg** (for media processing)
+- **RabbitMQ** (for message queuing)
+- **MongoDB** (for persistence)
+- **S3-compatible storage** (optional, for file storage)
+
+## Installation
+
+### Using Docker (Recommended)
+
+```bash
+# Build the Docker image
+sbt server/docker
+
+# Run with environment variables
+docker run -e QUEUE_HOST=localhost \
+           -e QUEUE_PORT=5672 \
+           -e S3_ENDPOINT_URL=http://localhost:9000 \
+           -e S3_ACCESS_KEY=your-key \
+           -e S3_SECRET_KEY=your-secret \
+           hirus/pak-media-worker:latest
+```
+
+### From Source
+
+```bash
+# Clone the repository
+git clone <repository-url>
+cd pak-media-worker
+
+# Build the project
+sbt compile
+
+# Run the server
+sbt server/run
+```
+
+## Configuration
+
+The service is configured through environment variables:
+
+| Variable | Description | Required |
+|----------|-------------|----------|
+| `QUEUE_HOST` | RabbitMQ host | Yes |
+| `QUEUE_PORT` | RabbitMQ port | Yes |
+| `S3_ENDPOINT_URL` | S3 endpoint URL | Optional |
+| `S3_ACCESS_KEY` | S3 access key | Optional |
+| `S3_SECRET_KEY` | S3 secret key | Optional |
+
+## Usage
+
+### Starting a Media Stream
+
+Send a `StartMediaStream` command through RabbitMQ:
+
+```json
+{
+  "type": "StartMediaStream",
+  "name": "stream-name",
+  "source": "rtsp://source-url",
+  "sink": "rtmp://destination-url"
+}
+```
+
+### Using the Scala Client
+
+```scala
+import client.Client
+
+val client = Client.create()
+client.startStream("stream-name", "rtsp://source", "rtmp://destination")
+```
+
+### Using the Java Client
+
+```java
+import client.JavaClient;
+
+JavaClient client = new JavaClient();
+client.startStream("stream-name", "rtsp://source", "rtmp://destination");
+```
+
+## Development
+
+### Testing
+
+```bash
+# Run all tests
+sbt test
+
+# Run integration tests
+sbt integration/test
+
+# Run specific test suite
+sbt server/test
+```
+
+### Code Style
+
+We use Scalafmt for code formatting:
+
+```bash
+# Check code style
+sbt scalafmtCheckAll
+
+# Fix code style
+sbt scalafmtAll
+```
+
+## Contributing
+
+1. Fork the repository
+2. Create a feature branch (`git checkout -b feature/amazing-feature`)
+3. Make your changes
+4. Run tests and ensure code style compliance
+5. Commit your changes (`git commit -m 'Add amazing feature'`)
+6. Push to the branch (`git push origin feature/amazing-feature`)
+7. Open a Pull Request
+
+## License
+
+This project is licensed under the terms specified by the organization.
