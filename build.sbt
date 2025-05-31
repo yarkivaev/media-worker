@@ -16,7 +16,26 @@ inThisBuild(
    )
  )
 
+lazy val domain = (project in file("domain"))
+  .settings(
+    name := (ThisBuild / name).value,
+    organization := (ThisBuild / organization).value,
+    libraryDependencies ++= Seq(
+      "org.typelevel" %% "cats-effect" % "3.5.7",
+      "com.lihaoyi" %% "os-lib" % "0.11.4",
+      "io.circe" %% "circe-core" % "0.14.10",
+      "io.circe" %% "circe-generic" % "0.14.10",
+      "io.circe" %% "circe-parser" % "0.14.10",
+      "dev.hnaderi" %% "lepus-client" % "0.5.4",
+      "dev.hnaderi" %% "lepus-std" % "0.5.4",
+      "dev.hnaderi" %% "lepus-circe" % "0.5.4",
+      "org.scalatest" %% "scalatest" % "3.2.19" % Test,
+      "org.typelevel" %% "cats-effect" % "3.5.7" % Test,
+    )
+  )
+
 lazy val root = (project in file("."))
+  .dependsOn(domain)
   .settings(
     name := (ThisBuild / name).value,
     organization := (ThisBuild / organization).value,
@@ -49,18 +68,21 @@ lazy val root = (project in file("."))
       "-Wunused:imports"
     ),
     docker / dockerfile := {
+      val domainJarFile: File = (domain / Compile / packageBin / sbt.Keys.`package`).value
       val jarFile: File = (Compile / packageBin / sbt.Keys.`package`).value
       val classpath = (Compile / managedClasspath).value
       val mainclass = (Compile / packageBin / mainClass).value.getOrElse(sys.error("Expected exactly one main class"))
+      val domainJarTarget = s"/app/domain.jar"
       val jarTarget = s"/app/${jarFile.getName}"
       val classpathString = classpath.files
         .map("/app/" + _.getName)
-        .mkString(":") + ":" + jarTarget
+        .mkString(":") + ":" + jarTarget + ":" + domainJarTarget
       new Dockerfile {
         from("openjdk:17-jdk-slim")
         runRaw("apt-get update && apt-get install -y --no-install-recommends ffmpeg && rm -rf /var/lib/apt/lists/*")
         add(classpath.files, "/app/")
         add(jarFile, jarTarget)
+        add(domainJarFile, domainJarTarget)
         entryPoint("java", "-cp", classpathString, mainclass)
       }
     },
@@ -102,7 +124,7 @@ buildDockerBeforeTests := {
 }
 
 lazy val integration = (project in file("integration"))
-  .dependsOn(root)
+  .dependsOn(root, domain)
   .settings(
     publish / skip := true,
     libraryDependencies ++= Seq(
@@ -111,7 +133,8 @@ lazy val integration = (project in file("integration"))
       "com.dimafeng" %% "testcontainers-scala-rabbitmq" % "0.43.0",
       "com.dimafeng" %% "testcontainers-scala-minio" % "0.43.0",
       "org.scalatest" %% "scalatest" % "3.2.19",
-      "com.github.kokorin.jaffree" % "jaffree" % "2024.08.29"
+      "com.github.kokorin.jaffree" % "jaffree" % "2024.08.29",
+      "io.minio" % "minio" % "8.3.4" % Test,
     ),
     (Test / test) := ((Test / test) dependsOn (root / buildDockerBeforeTests)).value,
     Compile / sourceGenerators += Def.task {

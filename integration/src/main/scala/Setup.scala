@@ -14,37 +14,22 @@ object Setup {
     val network: Network = newNetwork()
     val rtspServer = DummyRtspServer().configure(container => {
       container.setNetwork(network)
-      // container.withCreateContainerCmdModifier { cmd =>
-      //   cmd.withName("rtsp-server")
-      // }
     })
     rtspServer.start()
     val rtspStream = DummyRtspStream(rtspServer.networkAliases.head, 8554).configure(container => {
       container.setNetwork(network)
-      // container.withCreateContainerCmdModifier { cmd =>
-      //   cmd.withName("rtsp-stream")
-      // }
     })
     rtspStream.start()
     val rabbitMQ = RabbitMQContainer(DockerImageName.parse("rabbitmq:3-management")).configure(container => {
       container.setNetwork(network)
-      // container.withCreateContainerCmdModifier { cmd =>
-      //   cmd.withName("broker")
-      // }
     })
     rabbitMQ.start()
     val s3 = MinIOContainer().configure(container => {
       container.setNetwork(network)
-      // container.withCreateContainerCmdModifier { cmd =>
-      //   cmd.withName("s3")
-      // }
     })
     s3.start()
     val mediaWorker = MediaWorker(rabbitMQ.networkAliases.head, s3.networkAliases.head, 5672).configure(container => {
       container.setNetwork(network)
-      // container.withCreateContainerCmdModifier { cmd =>
-      //   cmd.withName("media-worker")
-      // }
     })
     mediaWorker.start()
     rtspServer and rtspStream and rabbitMQ and mediaWorker and s3
