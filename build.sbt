@@ -31,6 +31,10 @@ lazy val domain = (project in file("domain"))
       "dev.hnaderi" %% "lepus-circe" % "0.5.4",
       "org.scalatest" %% "scalatest" % "3.2.19" % Test,
       "org.typelevel" %% "cats-effect" % "3.5.7" % Test,
+      "com.dimafeng" %% "testcontainers-scala-core" % "0.43.0" % Test,
+      "com.dimafeng" %% "testcontainers-scala-scalatest" % "0.43.0" % Test,
+      "com.dimafeng" %% "testcontainers-scala-rabbitmq" % "0.43.0" % Test,
+      "org.scalatestplus" %% "mockito-5-10" % "3.2.18.0" % Test,
     )
   )
 
