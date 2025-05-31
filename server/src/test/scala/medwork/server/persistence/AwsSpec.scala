@@ -51,7 +51,7 @@ class AwsSpec extends flatspec.AnyFlatSpec with matchers.should.Matchers with Be
 
     // minioClient.makeBucket(MakeBucketArgs.builder().bucket(bucketName).build())
 
-    val bucketSem:(String => IO[Semaphore[IO]]) = _ => Semaphore[IO](1)
+    val bucketSem: (String => IO[Semaphore[IO]]) = _ => Semaphore[IO](1)
 
     val storage = aws(bucketSem, minioClient)
 
