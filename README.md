@@ -86,13 +86,13 @@ sbt server/run
 
 The service is configured through environment variables:
 
-| Variable | Description | Required |
-|----------|-------------|----------|
-| `QUEUE_HOST` | RabbitMQ host | Yes |
-| `QUEUE_PORT` | RabbitMQ port | Yes |
-| `S3_ENDPOINT_URL` | S3 endpoint URL | Optional |
-| `S3_ACCESS_KEY` | S3 access key | Optional |
-| `S3_SECRET_KEY` | S3 secret key | Optional |
+| Variable | Description |
+|----------|-------------|
+| `QUEUE_HOST` | RabbitMQ host |
+| `QUEUE_PORT` | RabbitMQ port |
+| `S3_ENDPOINT_URL` | S3 endpoint URL |
+| `S3_ACCESS_KEY` | S3 access key |
+| `S3_SECRET_KEY` | S3 secret key |
 
 ## Usage
 
