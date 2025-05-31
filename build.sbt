@@ -34,11 +34,13 @@ lazy val domain = (project in file("domain"))
     )
   )
 
-lazy val root = (project in file("."))
+lazy val server = (project in file("server"))
+  .enablePlugins(DockerPlugin)
   .dependsOn(domain)
   .settings(
     name := (ThisBuild / name).value,
     organization := (ThisBuild / organization).value,
+    Compile / mainClass := Some("medwork.server.Server"),
     libraryDependencies ++= Seq(
       "org.typelevel" %% "cats-effect" % "3.5.7",
       "com.github.nscala-time" %% "nscala-time" % "3.0.0",
@@ -116,15 +118,25 @@ lazy val root = (project in file("."))
       )
   )
 
-lazy val buildDockerBeforeTests = taskKey[Unit]("Build Docker image before running tests in integration module")
-
-buildDockerBeforeTests := {
-  println("Building Docker image before running tests in the integration module...")
-  (root / docker).value
-}
+lazy val client = (project in file("client"))
+  .dependsOn(domain)
+  .settings(
+    libraryDependencies ++= Seq(
+      "org.scalatest" %% "scalatest" % "3.2.19" % Test,
+      "org.junit.jupiter" % "junit-jupiter" % "5.8.1" % Test,
+      "org.testcontainers" % "testcontainers" % "1.20.5" % Test,
+      "org.testcontainers" % "rabbitmq" % "1.20.5" % Test,
+      "org.scalatestplus" %% "mockito-5-10" % "3.2.18.0" % Test,
+    ),
+    publishTo := Some(
+      ("Nexus Repository" at "http://212.67.12.16:8081/repository/maven-snapshots/").withAllowInsecureProtocol(true)
+    ),
+    credentials += Credentials("Sonatype Nexus Repository Manager", "212.67.12.16", "pak-service", "uFc7Fy6bCXQQ"),
+    publishMavenStyle := true,
+  )
 
 lazy val integration = (project in file("integration"))
-  .dependsOn(root, domain)
+  .dependsOn(domain, server, client)
   .settings(
     publish / skip := true,
     libraryDependencies ++= Seq(
@@ -136,7 +148,7 @@ lazy val integration = (project in file("integration"))
       "com.github.kokorin.jaffree" % "jaffree" % "2024.08.29",
       "io.minio" % "minio" % "8.3.4" % Test,
     ),
-    (Test / test) := ((Test / test) dependsOn (root / buildDockerBeforeTests)).value,
+    (Test / test) := ((Test / test) dependsOn (server / docker)).value,
     Compile / sourceGenerators += Def.task {
       val file = (Compile / sourceManaged).value / "generated" / "ProjectBuildInfo.scala"
       val content =
